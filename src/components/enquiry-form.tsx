@@ -27,7 +27,7 @@ export function EnquiryForm() {
             autoComplete={field.autoComplete}
             required
             defaultValue={state.values?.[field.name] ?? ""}
-            className="mt-2 w-full border-b border-line bg-transparent py-2 text-ink outline-none placeholder:text-muted/70"
+            className="mt-2 w-full border-b border-white/20 bg-transparent py-2 text-white outline-none"
           />
           {state.fieldErrors?.[field.name] ? (
             <span className="mt-2 block text-sm text-ember">
@@ -46,7 +46,7 @@ export function EnquiryForm() {
           required
           rows={6}
           defaultValue={state.values?.message ?? ""}
-          className="mt-2 w-full resize-y border-b border-line bg-transparent py-2 text-ink outline-none"
+          className="mt-2 w-full resize-y border-b border-white/20 bg-transparent py-2 text-white outline-none"
         />
         {state.fieldErrors?.message ? (
           <span className="mt-2 block text-sm text-ember">
@@ -57,13 +57,13 @@ export function EnquiryForm() {
       <button
         type="submit"
         disabled={pending}
-        className="border border-ink bg-ink px-5 py-3 text-sm text-paper transition-colors hover:bg-transparent hover:text-ink disabled:cursor-wait disabled:opacity-60"
+        className="rounded bg-ember px-5 py-2.5 text-sm font-bold text-white disabled:cursor-wait disabled:opacity-60"
       >
         {pending ? "Sending" : "Send enquiry"}
       </button>
       {state.message ? (
         <p
-          className={`mt-5 text-sm ${state.status === "error" ? "text-ember" : "text-ink"}`}
+          className={`mt-5 text-sm ${state.status === "error" ? "text-ember" : "text-white"}`}
           role="status"
         >
           {state.message}

@@ -8,12 +8,12 @@ export const metadata: Metadata = {
 
 export default function ContactPage() {
   return (
-    <div className="mx-auto w-full max-w-6xl px-5 py-14 md:px-8 md:py-20">
-      <p className="text-[11px] tracking-[0.24em] text-muted uppercase">Contact</p>
-      <h1 className="mt-4 max-w-2xl font-serif text-5xl leading-[0.95] tracking-tight md:text-6xl">
-        Write to the studio.
+    <div className="bg-transparent px-4 pb-16 pt-24 md:px-12">
+      <p className="text-xs font-semibold tracking-[0.28em] text-muted uppercase">Contact us</p>
+      <h1 className="mt-3 max-w-2xl text-4xl font-bold leading-tight md:text-5xl">
+        Tell us what you want made.
       </h1>
-      <p className="mt-6 max-w-xl text-lg leading-8 text-muted">
+      <p className="mt-5 max-w-xl text-base leading-7 text-muted">
         Tell us the project, the timing, and how to reply. The form is checked
         in this app. It does not send email until a mail provider is connected.
       </p>

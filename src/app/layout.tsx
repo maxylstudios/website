@@ -1,19 +1,12 @@
 import type { Metadata } from "next";
-import { Geist, Instrument_Serif } from "next/font/google";
-import { SiteFooter } from "@/components/site-footer";
-import { SiteHeader } from "@/components/site-header";
+import { Comfortaa } from "next/font/google";
+import { AppShell } from "@/components/app-shell";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const comfortaa = Comfortaa({
+  variable: "--font-comfortaa",
   subsets: ["latin"],
-});
-
-const instrument = Instrument_Serif({
-  variable: "--font-instrument",
-  subsets: ["latin"],
-  weight: "400",
-  style: ["normal", "italic"],
+  weight: ["400", "500", "600", "700"],
 });
 
 export const metadata: Metadata = {
@@ -22,19 +15,14 @@ export const metadata: Metadata = {
     template: "%s — Maxyl Studios",
   },
   description:
-    "A portfolio catalogue from Maxyl Studios: identity, digital, editorial, and spatial work, listed as numbered plates.",
+    "Ads and entertainment from Maxyl Studios.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html
-      lang="en"
-      className={`${geistSans.variable} ${instrument.variable} h-full antialiased`}
-    >
-      <body className="flex min-h-full flex-col">
-        <SiteHeader />
-        <main className="flex-1">{children}</main>
-        <SiteFooter />
+    <html lang="en" className={`${comfortaa.variable} h-full antialiased`}>
+      <body className="min-h-full bg-black text-white">
+        <AppShell>{children}</AppShell>
       </body>
     </html>
   );
