@@ -15,6 +15,7 @@ import {
 } from "@/lib/media";
 import { loadAdminItem, removeAdminMedia, saveAdminMedia } from "@/app/admin/actions";
 import { uploadAdminFile } from "@/lib/admin-upload";
+import { grabVideoPosterFile } from "@/lib/video-poster";
 import { cropImage, extensionForType } from "@/lib/crop-image";
 import { closestAspect, guessPlaceFromFilename, titleFromFilename } from "@/lib/guess-place";
 import { adsCategories, adsCategory, entertainmentCategory, sectionCategories } from "@/lib/taxonomy";
@@ -215,8 +216,15 @@ export function MediaEditor({ id }: Props) {
         const path = await uploadAdminFile(croppedFile, "image", setProgress);
         form.set("storagePath", path);
       } else if (file && kind === "video") {
+        setProgress({ percent: 6, label: "Making poster" });
+        const posterFile = await grabVideoPosterFile(file);
         const path = await uploadAdminFile(file, "video", setProgress);
         form.set("storagePath", path);
+        if (posterFile) {
+          setProgress({ percent: 93, label: "Uploading poster" });
+          const posterPath = await uploadAdminFile(posterFile, "image", () => {});
+          form.set("posterPath", posterPath);
+        }
       }
 
       setProgress({ percent: 96, label: "Saving details" });

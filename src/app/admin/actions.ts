@@ -166,7 +166,7 @@ export async function saveAdminMedia(formData: FormData) {
       return { ok: false as const, message: "Choose an image or a video." };
     }
 
-    const { error } = await supabase.rpc("save_media_item", {
+    const { data: savedId, error } = await supabase.rpc("save_media_item", {
       raw_token: token,
       item_id: itemId,
       item_title: title,
@@ -192,11 +192,22 @@ export async function saveAdminMedia(formData: FormData) {
       await deleteStoredVideo(existingPath);
     }
 
+    const id = String(savedId ?? itemId ?? "");
+    const posterPath = String(formData.get("posterPath") ?? "").trim();
+    if (id && posterPath && kind === "video") {
+      const { error: posterError } = await supabase.rpc("save_item_poster", {
+        raw_token: token,
+        item_id: id,
+        item_path: posterPath,
+      });
+      if (posterError) throw new Error(schemaMessage(posterError.message));
+    }
+
     revalidatePath("/");
     revalidatePath("/ads");
     revalidatePath("/entertainment");
     revalidatePath("/admin");
-    return { ok: true as const };
+    return { ok: true as const, id };
   } catch (caught) {
     const message = caught instanceof Error ? caught.message : "Could not save.";
     return { ok: false as const, message };

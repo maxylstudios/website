@@ -7,6 +7,7 @@ import { saveAdminMedia } from "@/app/admin/actions";
 import { uploadAdminFile } from "@/lib/admin-upload";
 import { closestAspect, guessPlaceFromFilename, titleFromFilename } from "@/lib/guess-place";
 import { adsCategories, sectionCategories } from "@/lib/taxonomy";
+import { grabVideoPosterFile } from "@/lib/video-poster";
 
 type RowStatus = "ready" | "uploading" | "saving" | "done" | "error";
 
@@ -188,6 +189,15 @@ export function BatchUploader() {
       patch(row.id, { status: "uploading", percent: 2, message: "Uploading" });
 
       try {
+        let posterPath = "";
+        if (row.kind === "video") {
+          patch(row.id, { status: "uploading", percent: 4, message: "Making poster" });
+          const posterFile = await grabVideoPosterFile(row.file);
+          if (posterFile) {
+            posterPath = await uploadAdminFile(posterFile, "image", () => {});
+          }
+        }
+
         const path = await uploadAdminFile(row.file, row.kind, (progress) => {
           patch(row.id, {
             status: "uploading",
@@ -212,6 +222,7 @@ export function BatchUploader() {
         if (row.kind === "video") {
           form.set("cropX", "50");
           form.set("cropY", "50");
+          if (posterPath) form.set("posterPath", posterPath);
         }
 
         const result = await saveAdminMedia(form);

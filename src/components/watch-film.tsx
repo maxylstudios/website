@@ -33,7 +33,7 @@ export async function WatchFilm({ id }: { id: string }) {
             <FilmPlayer
               src={url}
               title={item.title}
-              poster={`/api/poster/${item.id}`}
+              poster={item.poster_path ? mediaPublicUrl(item.poster_path) : `/api/poster/${item.id}`}
               initialRatio={frame.aspectRatio}
             />
           ) : (
