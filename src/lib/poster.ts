@@ -6,8 +6,10 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 function ffmpegBin() {
-  const listed = (process.env.PATH ?? "").split(":").filter(Boolean).map((dir) => join(dir, "ffmpeg"));
-  return [...listed, "/opt/homebrew/bin/ffmpeg", "/usr/local/bin/ffmpeg", "/usr/bin/ffmpeg"].find((path) => existsSync(path)) ?? "ffmpeg";
+  if (existsSync("/opt/homebrew/bin/ffmpeg")) return "/opt/homebrew/bin/ffmpeg";
+  if (existsSync("/usr/local/bin/ffmpeg")) return "/usr/local/bin/ffmpeg";
+  if (existsSync("/usr/bin/ffmpeg")) return "/usr/bin/ffmpeg";
+  return "ffmpeg";
 }
 
 const cacheDir = join(tmpdir(), "maxyl-posters");

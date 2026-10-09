@@ -101,8 +101,11 @@ export function HomeBillboard({
     const video = videoRef.current;
     if (!video) return;
     video.muted = muted;
+    video.setAttribute("fetchpriority", "high");
     void video.play().catch(() => undefined);
   }, [muted, item.id]);
+
+  const filmHref = playHref === undefined ? mediaHref(item) : playHref;
 
   const line =
     item.caption?.trim() ||
@@ -149,7 +152,6 @@ export function HomeBillboard({
       loop
       playsInline
       preload="auto"
-      fetchPriority="high"
       aria-label={item.title}
     />
   );
@@ -215,9 +217,9 @@ export function HomeBillboard({
               >
                 Entertainment
               </Link>
-              {(playHref === undefined ? mediaHref(item) : playHref) ? (
+              {filmHref ? (
                 <Link
-                  href={playHref === undefined ? mediaHref(item) : playHref}
+                  href={filmHref}
                   className="px-2 py-3 text-sm font-bold text-white/80 transition hover:text-white"
                 >
                   This film
