@@ -3,15 +3,15 @@
 import { useState } from "react";
 import { mediaPublicUrl, type MediaItem } from "@/lib/media";
 
-type Mode = "uploaded" | "api" | "video" | "empty";
+type Mode = "uploaded" | "video" | "empty";
 
 function startMode(item: MediaItem): Mode {
   if (item.kind === "image") return "uploaded";
   if (item.poster_path) return "uploaded";
-  return "api";
+  return "video";
 }
 
-/** Prefer an uploaded poster; otherwise try server ffmpeg; otherwise show a muted video frame. */
+/** Prefer a stored poster; otherwise show a muted video frame (no server ffmpeg). */
 export function MediaPoster({
   item,
   className,
@@ -34,19 +34,6 @@ export function MediaPoster({
       // eslint-disable-next-line @next/next/no-img-element
       <img
         src={mediaPublicUrl(item.poster_path)}
-        alt=""
-        loading="lazy"
-        className={className}
-        onError={() => setMode("api")}
-      />
-    );
-  }
-
-  if (mode === "api") {
-    return (
-      // eslint-disable-next-line @next/next/no-img-element
-      <img
-        src={`/api/poster/${item.id}`}
         alt=""
         loading="lazy"
         className={className}

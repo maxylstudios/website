@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { MediaPoster } from "@/components/media-poster";
 import { MediaThumb } from "@/components/media-thumb";
 import { mediaHref, type MediaItem } from "@/lib/media";
 
@@ -26,7 +26,6 @@ export function HomeFilmCard({
   autoPlay?: boolean;
 }) {
   const portrait = orientation === "portrait";
-  const [still, setStill] = useState(true);
 
   return (
     <Link
@@ -37,18 +36,11 @@ export function HomeFilmCard({
       }`}
     >
       <span className={`relative block w-full overflow-hidden bg-black ${portrait ? "aspect-[2/3]" : "aspect-video"}`}>
-        {item.kind === "video" && still ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={`/api/poster/${item.id}`}
-            alt=""
-            loading="lazy"
-            className="absolute inset-0 h-full w-full object-cover"
-            onError={() => setStill(false)}
-          />
-        ) : item.kind === "image" ? (
+        {item.kind === "video" ? (
+          <MediaPoster item={item} className="absolute inset-0 h-full w-full object-cover" />
+        ) : (
           <MediaThumb item={item} fill className="absolute inset-0 h-full overflow-hidden rounded-none bg-black" sizes={portrait ? "208px" : "384px"} />
-        ) : null}
+        )}
         <span className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.32),rgba(255,255,255,0.05)_16%,transparent_34%)]" />
         <span className="pointer-events-none absolute inset-0 ring-1 ring-inset ring-white/20" />
         {item.kind === "video" ? <PlayMark /> : null}
