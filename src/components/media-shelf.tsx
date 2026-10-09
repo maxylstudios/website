@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { MediaPoster } from "@/components/media-poster";
 import { MediaThumb } from "@/components/media-thumb";
 import { isPortraitItem, mediaHref, type MediaItem } from "@/lib/media";
 
@@ -20,13 +21,7 @@ export function MediaShelf({ items }: { items: MediaItem[] }) {
             >
               <span className={`relative block overflow-hidden bg-black ${portrait ? "aspect-[2/3]" : "aspect-video"}`}>
                 {item.kind === "video" ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={`/api/poster/${item.id}`}
-                    alt=""
-                    loading="lazy"
-                    className="absolute inset-0 h-full w-full object-cover"
-                  />
+                  <MediaPoster item={item} className="absolute inset-0 h-full w-full object-cover" />
                 ) : (
                   <MediaThumb item={item} fill className="absolute inset-0 h-full overflow-hidden rounded-none bg-black" sizes="25vw" />
                 )}

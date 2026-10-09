@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRef, type ReactNode } from "react";
 import { HomeContact, HomeIntro, HomeLanes, HomeNotes } from "@/components/home-sections";
+import { MediaPoster } from "@/components/media-poster";
 import { catalogueSlug, isPortraitItem, mediaHref, mediaPublicUrl, type MediaItem } from "@/lib/media";
 import { adsCategory, entertainmentCategory } from "@/lib/taxonomy";
 
@@ -42,13 +43,10 @@ export function ShelfTile({ item, href, frame }: { item: MediaItem; href: string
       aria-label={item.kind === "video" ? `Play ${item.title}` : item.title}
       className="group relative flex w-max max-w-[min(82vw,20rem)] shrink-0 snap-start flex-col gap-2.5 sm:max-w-[24rem]"
     >
-      <span className="relative w-max">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={posterSrc(item)}
-          alt=""
-          className={`${frame} w-auto rounded-xl border border-white/20 bg-neutral-950 object-contain shadow-[0_16px_40px_rgba(0,0,0,0.45)] transition duration-300 group-hover:border-white/35`}
-        />
+      <span
+        className={`relative flex items-center justify-center overflow-hidden rounded-xl border border-white/20 bg-neutral-950 shadow-[0_16px_40px_rgba(0,0,0,0.45)] transition duration-300 group-hover:border-white/35 ${frame}`}
+      >
+        <MediaPoster item={item} className="h-full w-auto max-w-none object-contain" />
         {item.kind === "video" ? <PlayMark /> : null}
       </span>
       {label ? (
@@ -122,15 +120,15 @@ export function HomeShelves({ videos, images }: { videos: MediaItem[]; images: M
 
   return (
     <div className="bg-black pb-2">
-      <Shelf title="Landscape" note="Wide films" items={horizontal} frame="h-40 sm:h-48" />
+      <Shelf title="Landscape" note="Wide films" items={horizontal} frame="h-40 min-w-[14rem] sm:h-48 sm:min-w-[17rem]" />
       <Between>
         <HomeIntro />
       </Between>
-      <Shelf title="Portrait" note="Tall films" items={vertical} frame="h-72 sm:h-80" />
+      <Shelf title="Portrait" note="Tall films" items={vertical} frame="h-72 min-w-[10rem] sm:h-80 sm:min-w-[11rem]" />
       <Between>
         <HomeLanes />
       </Between>
-      <Shelf title="Pictures" note="Stills" items={images} frame="h-64 sm:h-72" />
+      <Shelf title="Pictures" note="Stills" items={images} frame="h-64 min-w-[10rem] sm:h-72 sm:min-w-[12rem]" />
       <Between>
         <HomeNotes />
       </Between>
