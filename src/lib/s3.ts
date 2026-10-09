@@ -1,4 +1,7 @@
-import { DeleteObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { DeleteObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { Upload } from "@aws-sdk/lib-storage";
+import { Readable } from "node:stream";
+import type { ReadableStream as WebReadableStream } from "node:stream/web";
 
 const folder = "maxylstudios";
 
@@ -37,16 +40,23 @@ export function s3KeyFromStoredPath(path: string) {
   return decodeURIComponent(path.slice(prefix.length));
 }
 
-export async function uploadVideo(key: string, body: Uint8Array, contentType: string) {
-  await client().send(
-    new PutObjectCommand({
+export async function uploadVideo(key: string, body: Uint8Array | ReadableStream | Readable, contentType: string) {
+  const stream =
+    body instanceof Uint8Array ? Readable.from(body) : body instanceof Readable ? body : Readable.fromWeb(body as WebReadableStream);
+  const upload = new Upload({
+    client: client(),
+    queueSize: 4,
+    partSize: 8 * 1024 * 1024,
+    leavePartsOnError: false,
+    params: {
       Bucket: required("AWS_S3_BUCKET"),
       Key: key,
-      Body: body,
+      Body: stream,
       ContentType: contentType,
       CacheControl: "public, max-age=31536000",
-    }),
-  );
+    },
+  });
+  await upload.done();
   return videoPublicUrl(key);
 }
 

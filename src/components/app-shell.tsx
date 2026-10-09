@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { adsCategories, entertainment } from "@/lib/taxonomy";
+import { adsCategories } from "@/lib/taxonomy";
 
 const topLinks = [
   { href: "/", label: "Home" },
@@ -12,15 +12,10 @@ const topLinks = [
   { href: "/ads", label: "Ads" },
   { href: "/entertainment", label: "Entertainment" },
   { href: "/contact", label: "Contact us" },
-  { href: "/pricing", label: "Pricing" },
 ];
 
-function isCatalogue(pathname: string) {
-  return (
-    pathname.startsWith("/ads") ||
-    pathname.startsWith("/entertainment") ||
-    pathname.startsWith("/misc")
-  );
+function usesSidebar(pathname: string) {
+  return pathname.startsWith("/misc");
 }
 
 function isCurrent(pathname: string, href: string) {
@@ -36,22 +31,15 @@ function SideNav({
   onNavigate: () => void;
 }) {
   const pathname = usePathname();
-  const entertainmentOpen = pathname.startsWith("/entertainment");
   const miscOpen = pathname.startsWith("/misc");
-  const heading = entertainmentOpen ? "Entertainment" : miscOpen ? "Misc" : "Ads";
-  const links = entertainmentOpen
-    ? entertainment.items.map((item) => ({
-        href: `/entertainment/${item.slug}`,
-        label: item.name,
-        current: pathname === `/entertainment/${item.slug}` || pathname.startsWith(`/entertainment/${item.slug}/`),
-      }))
-    : miscOpen
-      ? []
-      : adsCategories.map((category) => ({
-          href: `/ads/${category.slug}`,
-          label: category.name,
-          current: pathname === `/ads/${category.slug}` || pathname.startsWith(`/ads/${category.slug}/`),
-        }));
+  const heading = miscOpen ? "Misc" : "Ads";
+  const links = miscOpen
+    ? []
+    : adsCategories.map((category) => ({
+        href: `/ads/${category.slug}`,
+        label: category.name,
+        current: pathname === `/ads/${category.slug}` || pathname.startsWith(`/ads/${category.slug}/`),
+      }));
 
   const itemClass = (current: boolean) =>
     `block rounded px-3 py-2 text-sm transition-colors ${
@@ -60,29 +48,27 @@ function SideNav({
 
   return (
     <aside
-        className={`fixed bottom-0 top-16 z-30 w-64 overflow-y-auto border-r border-line bg-black px-3 py-6 ${
+      className={`fixed bottom-0 top-16 z-30 w-64 overflow-y-auto border-r border-line bg-black px-3 py-6 ${
         open ? "block" : "hidden"
       } lg:block`}
     >
-          <ul className="mb-6 space-y-1 lg:hidden">
-            {topLinks.map((link) => (
-              <li key={link.href}>
-                <Link href={link.href} onClick={onNavigate} className={itemClass(isCurrent(pathname, link.href))}>
-                  {link.label}
-                </Link>
-              </li>
-            ))}
-          </ul>
-          <p className="px-3 text-[11px] tracking-[0.22em] text-muted uppercase">{heading}</p>
+      <ul className="mb-6 space-y-1 lg:hidden">
+        {topLinks.map((link) => (
+          <li key={link.href}>
+            <Link href={link.href} onClick={onNavigate} className={itemClass(isCurrent(pathname, link.href))}>
+              {link.label}
+            </Link>
+          </li>
+        ))}
+      </ul>
+      <p className="px-3 text-[11px] tracking-[0.22em] text-muted uppercase">{heading}</p>
       <nav aria-label={heading} className="mt-4">
         <ul className="space-y-1">
           <li>
             <Link
-              href={entertainmentOpen ? "/entertainment" : miscOpen ? "/misc" : "/ads"}
+              href={miscOpen ? "/misc" : "/ads"}
               onClick={onNavigate}
-              className={itemClass(
-                pathname === (entertainmentOpen ? "/entertainment" : miscOpen ? "/misc" : "/ads"),
-              )}
+              className={itemClass(pathname === (miscOpen ? "/misc" : "/ads"))}
             >
               All
             </Link>
@@ -109,8 +95,7 @@ function SideNav({
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const catalogue = isCatalogue(pathname);
-  const home = pathname === "/";
+  const sidebar = usesSidebar(pathname);
   const [open, setOpen] = useState(false);
 
   if (pathname.startsWith("/admin")) {
@@ -121,8 +106,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <div className="min-h-full bg-transparent">
       <header
         className={`fixed inset-x-0 top-0 z-40 flex h-16 items-center gap-6 px-4 md:px-8 ${
-          home
-            ? "border-b border-white/10 bg-black"
+          pathname === "/entertainment" || pathname === "/ads"
+            ? "bg-transparent"
+            : pathname === "/"
+              ? "bg-black"
             : "bg-gradient-to-b from-black via-black/75 to-transparent"
         }`}
       >
@@ -173,10 +160,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </button>
       </header>
 
-      {catalogue ? (
-        <SideNav open={open} onNavigate={() => setOpen(false)} />
-      ) : open ? (
-        <div className="fixed inset-x-0 top-16 z-30 border-b border-white/10 bg-black px-4 py-4 lg:hidden">
+      {sidebar ? <SideNav open={open} onNavigate={() => setOpen(false)} /> : null}
+
+      {open && !sidebar ? (
+        <div className="fixed inset-x-0 top-16 z-30 bg-black px-4 py-4 lg:hidden">
           <nav aria-label="Primary">
             <ul className="space-y-1">
               {topLinks.map((link) => (
@@ -195,7 +182,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
       ) : null}
 
-      <div className={catalogue ? "lg:pl-64" : ""}>{children}</div>
+      <div className={sidebar ? "lg:pl-64" : ""}>{children}</div>
     </div>
   );
 }

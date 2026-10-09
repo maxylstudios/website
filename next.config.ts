@@ -7,8 +7,9 @@ const supabaseHost = process.env.NEXT_PUBLIC_SUPABASE_URL
 const nextConfig: NextConfig = {
   experimental: {
     serverActions: {
-      bodySizeLimit: "52mb",
+      bodySizeLimit: "2gb",
     },
+    proxyClientMaxBodySize: "2gb",
   },
   images: {
     remotePatterns: [

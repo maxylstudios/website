@@ -45,3 +45,13 @@ body {
 .row-scroll::-webkit-scrollbar {
   display: none;
 }
+
+@keyframes cue-bar {
+  0%,
+  100% {
+    height: 28%;
+  }
+  50% {
+    height: 100%;
+  }
+}

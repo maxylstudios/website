@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { MediaShelf } from "@/components/media-shelf";
+import { SectionLinks } from "@/components/section-links";
 import { listPublishedMedia } from "@/lib/media";
 import { adsCategory, topicIn } from "@/lib/taxonomy";
 
@@ -36,6 +37,14 @@ export default async function AdsSubcategoryPage({ params }: PageProps) {
         {category.name}
       </Link>
       <h1 className="mt-3 text-4xl font-bold">{topic.name}</h1>
+      <SectionLinks
+        className="mt-6"
+        currentHref={`/ads/${category.slug}/${topic.slug}`}
+        links={category.items.map((item) => ({
+          href: `/ads/${category.slug}/${item.slug}`,
+          label: item.name,
+        }))}
+      />
       <div className="mt-8">
         <MediaShelf items={items} />
       </div>

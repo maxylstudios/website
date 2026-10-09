@@ -107,7 +107,7 @@ begin
     raise exception 'Upload was not found';
   end if;
 
-  delete from public.upload_tickets where object_name = item_path;
+  delete from public.upload_tickets where upload_tickets.object_name = item_path;
   return saved;
 end;
 $$;

@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { VideoMark } from "@/components/video-mark";
 
 type Props = {
   src: string;
   title: string;
+  initialRatio?: string;
 };
 
 function clock(seconds: number) {
@@ -15,7 +17,7 @@ function clock(seconds: number) {
   return `${minutes}:${String(rest).padStart(2, "0")}`;
 }
 
-export function FilmPlayer({ src, title }: Props) {
+export function FilmPlayer({ src, title, initialRatio = "16 / 9" }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const shellRef = useRef<HTMLDivElement>(null);
   const [playing, setPlaying] = useState(false);
@@ -24,7 +26,7 @@ export function FilmPlayer({ src, title }: Props) {
   const [volume, setVolume] = useState(1);
   const [muted, setMuted] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [ratio, setRatio] = useState("16 / 9");
+  const [ratio, setRatio] = useState(initialRatio);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -79,10 +81,15 @@ export function FilmPlayer({ src, title }: Props) {
   }
 
   const quiet = muted || volume === 0;
+  const [rw, rh] = ratio.split("/").map((part) => Number(part.trim()));
+  const shellStyle =
+    rw > 0 && rh > 0
+      ? { aspectRatio: ratio, width: `min(100%, calc(90vh * ${rw} / ${rh}))` }
+      : { aspectRatio: ratio, width: "100%" };
 
   return (
-    <div ref={shellRef} className="w-full bg-black">
-      <div className="relative w-full" style={{ aspectRatio: ratio }}>
+    <div ref={shellRef} className="mx-auto w-full max-w-full bg-black" style={shellStyle}>
+      <div className="relative h-full w-full">
         <video
           ref={videoRef}
           src={src}
@@ -91,7 +98,7 @@ export function FilmPlayer({ src, title }: Props) {
           controlsList="nodownload"
           disablePictureInPicture
           disableRemotePlayback
-          className="absolute inset-0 h-full w-full object-cover"
+          className="absolute inset-0 h-full w-full object-contain"
           onContextMenu={(event) => event.preventDefault()}
           onPlay={() => setPlaying(true)}
           onPause={() => setPlaying(false)}
@@ -105,11 +112,12 @@ export function FilmPlayer({ src, title }: Props) {
           }}
           onClick={togglePlay}
         />
+        <VideoMark />
         {playing ? null : (
           <button
             type="button"
             onClick={togglePlay}
-            className="absolute top-1/2 left-1/2 flex h-16 w-16 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-white text-black"
+            className="absolute top-1/2 left-1/2 z-10 flex h-16 w-16 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-white text-black"
             aria-label={`Play ${title}`}
           >
             <PlayIcon />

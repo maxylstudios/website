@@ -86,7 +86,7 @@ begin
 end;
 $$;
 
-create or replace function public.upload_ticket_valid(object_name text)
+create or replace function public.upload_ticket_valid(ticket_path text)
 returns boolean
 language sql
 stable
@@ -96,12 +96,12 @@ as $$
   select exists (
     select 1
     from public.upload_tickets
-    where upload_tickets.object_name = upload_ticket_valid.object_name
-      and expires_at > now()
+    where upload_tickets.object_name = ticket_path
+      and upload_tickets.expires_at > now()
   );
 $$;
 
-create or replace function public.begin_media_upload(raw_token text, object_name text)
+create or replace function public.begin_media_upload(raw_token text, ticket_path text)
 returns void
 language plpgsql
 security definer
@@ -112,8 +112,8 @@ begin
     raise exception 'Not allowed';
   end if;
 
-  insert into public.upload_tickets (object_name, expires_at)
-  values (object_name, now() + interval '15 minutes')
+  insert into public.upload_tickets as tickets (object_name, expires_at)
+  values (ticket_path, now() + interval '15 minutes')
   on conflict (object_name) do update
   set expires_at = excluded.expires_at;
 end;
@@ -214,7 +214,7 @@ begin
     raise exception 'Upload was not found';
   end if;
 
-  delete from public.upload_tickets where object_name = item_path;
+  delete from public.upload_tickets where upload_tickets.object_name = item_path;
   return saved;
 end;
 $$;

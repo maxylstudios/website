@@ -3,7 +3,7 @@ import path from "node:path";
 import Link from "next/link";
 import { CopySql } from "@/components/admin/copy-sql";
 
-const files = ["01_tables.sql", "02_functions.sql", "03_policies.sql", "04_storage.sql", "06_catalogue.sql"];
+const files = ["01_tables.sql", "02_functions.sql", "03_policies.sql", "04_storage.sql", "06_catalogue.sql", "07_homepage.sql", "08_fix_upload_ticket.sql"];
 
 export default function SetupPage() {
   const scripts = files.map((file) => ({
@@ -16,7 +16,7 @@ export default function SetupPage() {
       <p className="text-xs tracking-[0.22em] text-muted uppercase">One-time setup</p>
       <h1 className="mt-3 text-4xl font-bold">Create the studio tables</h1>
       <p className="mt-4 text-sm leading-6 text-muted">
-        In the Supabase SQL editor, run these files in order. File 05 is the desk password, so it is not shown here. If 01 through 05 are already in, run only 06_catalogue.sql.
+        In the Supabase SQL editor, run these files in order. File 05 is the desk password, so it is not shown here. If 01 through 07 are already in, run only 08_fix_upload_ticket.sql.
       </p>
       <ol className="mt-6 space-y-10">
         {scripts.map((script, index) => (
