@@ -1,13 +1,26 @@
 "use client";
 
 import Link from "next/link";
-import { useRef } from "react";
-import { isPortraitItem, mediaHref, mediaPublicUrl, type MediaItem } from "@/lib/media";
+import { useRef, type ReactNode } from "react";
+import { HomeContact, HomeIntro, HomeLanes, HomeNotes } from "@/components/home-sections";
+import { catalogueSlug, isPortraitItem, mediaHref, mediaPublicUrl, type MediaItem } from "@/lib/media";
+import { adsCategory, entertainmentCategory } from "@/lib/taxonomy";
 
 export function posterSrc(item: MediaItem) {
   if (item.poster_path) return mediaPublicUrl(item.poster_path);
   if (item.kind === "image") return mediaPublicUrl(item.storage_path);
   return `/api/poster/${item.id}`;
+}
+
+function categoryLabel(item: MediaItem) {
+  const slug = catalogueSlug(item);
+  if (item.section === "entertainment") {
+    return entertainmentCategory(slug)?.name ?? "Entertainment";
+  }
+  if (item.section === "ads") {
+    return adsCategory(slug)?.name ?? "Ads";
+  }
+  return "";
 }
 
 function PlayMark() {
@@ -21,15 +34,28 @@ function PlayMark() {
 }
 
 export function ShelfTile({ item, href, frame }: { item: MediaItem; href: string; frame: string }) {
+  const label = categoryLabel(item);
+
   return (
-    <Link href={href} aria-label={item.kind === "video" ? `Play ${item.title}` : item.title} className="relative flex w-max shrink-0 snap-start">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={posterSrc(item)}
-        alt=""
-        className={`${frame} w-auto rounded-xl border border-white/20 bg-neutral-950 object-contain shadow-[0_16px_40px_rgba(0,0,0,0.45)]`}
-      />
-      {item.kind === "video" ? <PlayMark /> : null}
+    <Link
+      href={href}
+      aria-label={item.kind === "video" ? `Play ${item.title}` : item.title}
+      className="group relative flex w-max max-w-[min(82vw,20rem)] shrink-0 snap-start flex-col gap-2.5 sm:max-w-[24rem]"
+    >
+      <span className="relative w-max">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={posterSrc(item)}
+          alt=""
+          className={`${frame} w-auto rounded-xl border border-white/20 bg-neutral-950 object-contain shadow-[0_16px_40px_rgba(0,0,0,0.45)] transition duration-300 group-hover:border-white/35`}
+        />
+        {item.kind === "video" ? <PlayMark /> : null}
+      </span>
+      {label ? (
+        <span className="max-w-full truncate px-0.5 text-[11px] font-semibold tracking-[0.2em] text-[#c4b5fd] uppercase">
+          {label}
+        </span>
+      ) : null}
     </Link>
   );
 }
@@ -86,15 +112,29 @@ function Chevron({ direction }: { direction: "left" | "right" }) {
   );
 }
 
+function Between({ children }: { children: ReactNode }) {
+  return <div className="border-y border-white/10">{children}</div>;
+}
+
 export function HomeShelves({ videos, images }: { videos: MediaItem[]; images: MediaItem[] }) {
   const horizontal = videos.filter((item) => !isPortraitItem(item));
   const vertical = videos.filter(isPortraitItem);
-  if (horizontal.length === 0 && vertical.length === 0 && images.length === 0) return null;
+
   return (
-    <div className="bg-black pb-10">
+    <div className="bg-black pb-2">
       <Shelf title="Landscape" note="Wide films" items={horizontal} frame="h-40 sm:h-48" />
+      <Between>
+        <HomeIntro />
+      </Between>
       <Shelf title="Portrait" note="Tall films" items={vertical} frame="h-72 sm:h-80" />
+      <Between>
+        <HomeLanes />
+      </Between>
       <Shelf title="Pictures" note="Stills" items={images} frame="h-64 sm:h-72" />
+      <Between>
+        <HomeNotes />
+      </Between>
+      <HomeContact />
     </div>
   );
 }

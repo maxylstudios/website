@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import { SiteFooter } from "@/components/site-footer";
 import { adsCategories } from "@/lib/taxonomy";
 
 const topLinks = [
@@ -182,7 +183,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
       ) : null}
 
-      <div className={sidebar ? "lg:pl-64" : ""}>{children}</div>
+      <div className={sidebar ? "lg:pl-64" : ""}>
+        {children}
+        <SiteFooter />
+      </div>
     </div>
   );
 }
