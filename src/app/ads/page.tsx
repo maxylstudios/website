@@ -32,12 +32,7 @@ export default async function AdsPage() {
   return (
     <div className="bg-black">
       {featured ? (
-        <HomeBillboard
-          item={featured}
-          kicker={featuredCategory ? featuredCategory.name : "Ads"}
-          blurb={null}
-          links={links}
-        />
+        <HomeBillboard item={featured} kicker={featuredCategory ? featuredCategory.name : "Ads"} blurb={null} links={links} />
       ) : (
         <section className="px-5 pb-6 pt-28 sm:px-8">
           <p className="text-xs font-semibold tracking-[0.28em] text-muted uppercase">Ads</p>

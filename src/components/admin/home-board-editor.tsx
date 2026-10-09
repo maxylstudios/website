@@ -3,14 +3,15 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { saveHomepageBoard } from "@/app/admin/actions";
-import { masonryColumns } from "@/components/home-posters";
+import { saveHomepageBoard, saveItemPoster } from "@/app/admin/actions";
+import { posterSrc } from "@/components/home-shelves";
 import { MediaThumb } from "@/components/media-thumb";
-import { type MediaItem } from "@/lib/media";
+import { uploadAdminFile } from "@/lib/admin-upload";
+import { isPortraitItem, type MediaItem } from "@/lib/media";
 
-type Lane = "video" | "image";
+type Lane = "horizontal" | "vertical" | "image";
 
-function startingLane(items: MediaItem[], ids: string[] | null, kind: Lane) {
+function startingLane(items: MediaItem[], ids: string[] | null, kind: "video" | "image") {
   const pool = items.filter((item) => item.kind === kind);
   if (!ids) return pool.filter((item) => item.published);
   const byId = new Map(pool.map((item) => [item.id, item]));
@@ -50,39 +51,62 @@ export function HomeBoardEditor({
   message: string;
 }) {
   const router = useRouter();
-  const [videos, setVideos] = useState(() => startingLane(items, videoIds, "video"));
+  const [horizontal, setHorizontal] = useState(() => startingLane(items, videoIds, "video").filter((item) => !isPortraitItem(item)));
+  const [vertical, setVertical] = useState(() => startingLane(items, videoIds, "video").filter(isPortraitItem));
   const [images, setImages] = useState(() => startingLane(items, imageIds, "image"));
   const [adding, setAdding] = useState<Lane | null>(null);
   const [query, setQuery] = useState("");
   const [dragId, setDragId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [posterBusy, setPosterBusy] = useState<string | null>(null);
   const [error, setError] = useState(message);
   const [saved, setSaved] = useState(false);
 
   const pools = useMemo(() => {
-    const used = new Set([...videos, ...images].map((item) => item.id));
+    const used = new Set([...horizontal, ...vertical, ...images].map((item) => item.id));
     const needle = query.trim().toLowerCase();
+    const titled = (item: MediaItem) => item.title.toLowerCase().includes(needle);
     return {
-      video: items.filter((item) => item.kind === "video" && !used.has(item.id) && item.title.toLowerCase().includes(needle)),
-      image: items.filter((item) => item.kind === "image" && !used.has(item.id) && item.title.toLowerCase().includes(needle)),
+      horizontal: items.filter((item) => item.kind === "video" && !isPortraitItem(item) && !used.has(item.id) && titled(item)),
+      vertical: items.filter((item) => item.kind === "video" && isPortraitItem(item) && !used.has(item.id) && titled(item)),
+      image: items.filter((item) => item.kind === "image" && !used.has(item.id) && titled(item)),
     };
-  }, [images, items, query, videos]);
+  }, [horizontal, images, items, query, vertical]);
 
   function update(lane: Lane, next: MediaItem[]) {
     setSaved(false);
-    if (lane === "video") setVideos(next);
+    if (lane === "horizontal") setHorizontal(next);
+    else if (lane === "vertical") setVertical(next);
     else setImages(next);
-  }
-
-  function add(item: MediaItem) {
-    update(item.kind, [...(item.kind === "video" ? videos : images), item]);
   }
 
   function drop(lane: Lane, targetId: string) {
     if (!dragId) return;
-    const current = lane === "video" ? videos : images;
+    const current = lane === "horizontal" ? horizontal : lane === "vertical" ? vertical : images;
     update(lane, insertBefore(current, dragId, targetId));
     setDragId(null);
+  }
+
+  async function uploadPoster(id: string, file: File) {
+    setPosterBusy(id);
+    setError("");
+    try {
+      const path = await uploadAdminFile(file, "image", () => {});
+      const result = await saveItemPoster(id, path);
+      if (!result.ok) {
+        setError(result.message);
+        return;
+      }
+      const patch = (item: MediaItem) => (item.id === id ? { ...item, poster_path: path } : item);
+      setHorizontal((current) => current.map(patch));
+      setVertical((current) => current.map(patch));
+      setImages((current) => current.map(patch));
+      setSaved(true);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Could not upload the poster.");
+    } finally {
+      setPosterBusy(null);
+    }
   }
 
   async function save() {
@@ -90,7 +114,7 @@ export function HomeBoardEditor({
     setError("");
     setSaved(false);
     const result = await saveHomepageBoard(
-      videos.map((item) => item.id),
+      [...horizontal, ...vertical].map((item) => item.id),
       images.map((item) => item.id),
     );
     setBusy(false);
@@ -107,9 +131,9 @@ export function HomeBoardEditor({
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-xs font-semibold tracking-[0.28em] text-[#c4b5fd] uppercase">Homepage</p>
-          <h1 className="mt-2 text-3xl font-bold">Films, then pictures</h1>
+          <h1 className="mt-2 text-3xl font-bold">The shelves</h1>
           <p className="mt-2 max-w-xl text-sm leading-6 text-muted">
-            This is the page under the hero. Drag a tile to reorder it. Order runs left, right, left, right.
+            Same rows as the homepage under the hero. Landscape films, portrait films, then pictures. On a film, Poster uploads art of any shape.
           </p>
         </div>
         <button
@@ -126,28 +150,55 @@ export function HomeBoardEditor({
       {saved ? <p className="mt-4 text-sm text-[#c4b5fd]">Homepage updated.</p> : null}
 
       <LaneEditor
-        title="Videos"
-        hint="The masonry directly under the hero."
-        items={videos}
-        adding={adding === "video"}
-        pool={pools.video}
+        title="Landscape"
+        hint="Wide films. The first shelf under the hero."
+        artClass="h-36"
+        posters
+        posterBusy={posterBusy}
+        onPoster={uploadPoster}
+        items={horizontal}
+        adding={adding === "horizontal"}
+        pool={pools.horizontal}
         query={query}
         onQuery={setQuery}
         onToggleAdd={() => {
           setQuery("");
-          setAdding((current) => (current === "video" ? null : "video"));
+          setAdding((current) => (current === "horizontal" ? null : "horizontal"));
         }}
-        onAdd={add}
-        onMove={(id, direction) => update("video", move(videos, id, direction))}
-        onRemove={(id) => update("video", videos.filter((item) => item.id !== id))}
+        onAdd={(item) => update("horizontal", [...horizontal, item])}
+        onMove={(id, direction) => update("horizontal", move(horizontal, id, direction))}
+        onRemove={(id) => update("horizontal", horizontal.filter((item) => item.id !== id))}
         onDragStart={setDragId}
-        onDrop={(id) => drop("video", id)}
+        onDrop={(id) => drop("horizontal", id)}
       />
 
       <LaneEditor
-        title="Images"
-        hint="The masonry under the videos."
-        balanced
+        title="Portrait"
+        hint="Tall films. The shelf under the landscape films."
+        artClass="h-64"
+        posters
+        posterBusy={posterBusy}
+        onPoster={uploadPoster}
+        items={vertical}
+        adding={adding === "vertical"}
+        pool={pools.vertical}
+        query={query}
+        onQuery={setQuery}
+        onToggleAdd={() => {
+          setQuery("");
+          setAdding((current) => (current === "vertical" ? null : "vertical"));
+        }}
+        onAdd={(item) => update("vertical", [...vertical, item])}
+        onMove={(id, direction) => update("vertical", move(vertical, id, direction))}
+        onRemove={(id) => update("vertical", vertical.filter((item) => item.id !== id))}
+        onDragStart={setDragId}
+        onDrop={(id) => drop("vertical", id)}
+      />
+
+      <LaneEditor
+        title="Pictures"
+        hint="The shelf under the films."
+        artClass="h-48"
         items={images}
         adding={adding === "image"}
         pool={pools.image}
@@ -157,7 +208,7 @@ export function HomeBoardEditor({
           setQuery("");
           setAdding((current) => (current === "image" ? null : "image"));
         }}
-        onAdd={add}
+        onAdd={(item) => update("image", [...images, item])}
         onMove={(id, direction) => update("image", move(images, id, direction))}
         onRemove={(id) => update("image", images.filter((item) => item.id !== id))}
         onDragStart={setDragId}
@@ -170,7 +221,10 @@ export function HomeBoardEditor({
 function LaneEditor({
   title,
   hint,
-  balanced = false,
+  artClass,
+  posters = false,
+  posterBusy,
+  onPoster,
   items,
   adding,
   pool,
@@ -185,7 +239,10 @@ function LaneEditor({
 }: {
   title: string;
   hint: string;
-  balanced?: boolean;
+  artClass: string;
+  posters?: boolean;
+  posterBusy?: string | null;
+  onPoster?: (id: string, file: File) => void;
   items: MediaItem[];
   adding: boolean;
   pool: MediaItem[];
@@ -198,8 +255,6 @@ function LaneEditor({
   onDragStart: (id: string) => void;
   onDrop: (id: string) => void;
 }) {
-  const columns = masonryColumns(items);
-
   return (
     <section className="mt-10">
       <div className="flex flex-wrap items-end justify-between gap-3">
@@ -217,45 +272,68 @@ function LaneEditor({
       </div>
 
       {items.length === 0 ? (
-        <p className="mt-6 rounded-[1.35rem] border border-dashed border-white/20 px-6 py-12 text-center text-sm text-muted">
-          Nothing in this section yet.
+        <p className="mt-6 rounded-2xl border border-dashed border-white/20 px-6 py-12 text-center text-sm text-muted">
+          Nothing in this shelf yet.
         </p>
       ) : (
-        <div className={`mt-6 grid items-start gap-3 ${balanced ? "grid-cols-2" : columns.length > 1 ? "grid-cols-[1.55fr_0.58fr]" : "grid-cols-1"}`}>
-          {columns.map((column, index) => (
-            <div key={index} className="flex flex-col gap-3">
-              {column.map((item) => (
-                <article
-                  key={item.id}
-                  draggable
-                  onDragStart={() => onDragStart(item.id)}
-                  onDragOver={(event) => event.preventDefault()}
-                  onDrop={() => onDrop(item.id)}
-                  className="relative overflow-hidden rounded-[1.35rem] border border-white/30 bg-black shadow-[inset_0_1px_0_rgba(255,255,255,0.65),0_18px_50px_rgba(0,0,0,0.55),0_0_32px_rgba(139,92,246,0.28)]"
-                >
-                  <MediaThumb item={item} active preload="metadata" className="overflow-hidden rounded-none bg-black" sizes="40vw" />
-                  <div className="absolute inset-x-0 bottom-0 flex items-center gap-2 bg-gradient-to-t from-black via-black/80 to-transparent px-3 pt-10 pb-3">
-                    <p className="min-w-0 flex-1 truncate text-sm font-bold">
-                      <Link href={`/admin/media/${item.id}`} className="hover:underline">
-                        {item.title}
-                      </Link>
-                    </p>
-                    {!item.published ? (
-                      <span className="rounded-full bg-white/15 px-2 py-1 text-[10px] font-semibold text-white">Hidden</span>
-                    ) : null}
-                    <button type="button" aria-label={`Move ${item.title} earlier`} onClick={() => onMove(item.id, -1)} className="rounded bg-white/15 px-2 py-1 text-xs font-bold">
-                      Earlier
-                    </button>
-                    <button type="button" aria-label={`Move ${item.title} later`} onClick={() => onMove(item.id, 1)} className="rounded bg-white/15 px-2 py-1 text-xs font-bold">
-                      Later
-                    </button>
-                    <button type="button" aria-label={`Take ${item.title} off the homepage`} onClick={() => onRemove(item.id)} className="rounded bg-white px-2 py-1 text-xs font-bold text-black">
-                      Off page
-                    </button>
-                  </div>
-                </article>
-              ))}
-            </div>
+        <div className="row-scroll mt-5 flex items-start gap-4 overflow-x-auto pb-4">
+          {items.map((item) => (
+            <article
+              key={item.id}
+              draggable
+              onDragStart={() => onDragStart(item.id)}
+              onDragOver={(event) => event.preventDefault()}
+              onDrop={() => onDrop(item.id)}
+              className="flex w-max shrink-0 cursor-grab flex-col active:cursor-grabbing"
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={posterSrc(item)}
+                alt=""
+                draggable={false}
+                className={`${artClass} w-auto rounded-xl border border-white/20 bg-neutral-950 object-contain`}
+              />
+              <div className="mt-3 flex max-w-[16rem] items-center gap-2">
+                {item.kind === "video" ? (
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#8b5cf6] text-black" aria-hidden>
+                    <svg width="8" height="9" viewBox="0 0 9 10">
+                      <path d="M1.1.8v8.4L8.2 5 1.1.8Z" fill="currentColor" />
+                    </svg>
+                  </span>
+                ) : null}
+                <Link href={`/admin/media/${item.id}`} className="min-w-0 truncate text-sm font-bold hover:underline">
+                  {item.title}
+                </Link>
+              </div>
+              <div className="mt-2 flex max-w-[16rem] flex-wrap gap-1.5">
+                {posters ? (
+                  <label className="cursor-pointer rounded bg-[#8b5cf6] px-2 py-1 text-[11px] font-bold text-black">
+                    {posterBusy === item.id ? "Uploading" : item.poster_path ? "Replace poster" : "Poster"}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="sr-only"
+                      disabled={posterBusy === item.id}
+                      onChange={(event) => {
+                        const file = event.target.files?.[0];
+                        event.target.value = "";
+                        if (file && onPoster) onPoster(item.id, file);
+                      }}
+                    />
+                  </label>
+                ) : null}
+                {!item.published ? <span className="rounded bg-white/15 px-2 py-1 text-[11px] font-semibold">Hidden</span> : null}
+                <button type="button" aria-label={`Move ${item.title} earlier`} onClick={() => onMove(item.id, -1)} className="rounded bg-white/15 px-2 py-1 text-[11px] font-bold">
+                  Earlier
+                </button>
+                <button type="button" aria-label={`Move ${item.title} later`} onClick={() => onMove(item.id, 1)} className="rounded bg-white/15 px-2 py-1 text-[11px] font-bold">
+                  Later
+                </button>
+                <button type="button" aria-label={`Take ${item.title} off the homepage`} onClick={() => onRemove(item.id)} className="rounded bg-white px-2 py-1 text-[11px] font-bold text-black">
+                  Off page
+                </button>
+              </div>
+            </article>
           ))}
         </div>
       )}

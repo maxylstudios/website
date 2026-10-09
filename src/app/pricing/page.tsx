@@ -30,7 +30,7 @@ export default function PricingPage() {
       </h1>
       <p className="mt-6 max-w-2xl text-base leading-7 text-muted">
         Length, cast, and how many versions you need change the cost. Tell us the category
-        and the subcategory, and we reply with a quote.
+        and the category, and we reply with a quote.
       </p>
       <ul className="mt-10 grid gap-4 md:grid-cols-3">
         {offers.map((offer) => (

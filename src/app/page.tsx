@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { HomeBillboard } from "@/components/home-billboard";
-import { HomePosters } from "@/components/home-posters";
+import { HomeShelves } from "@/components/home-shelves";
 import { arrangeHomepage, getHeroVideo, getHomepageBoard, heroAsMediaItem, isPortraitItem, listPublishedMedia } from "@/lib/media";
 
 export default async function Home() {
@@ -23,8 +23,7 @@ export default async function Home() {
           </Link>
         </section>
       )}
-      <HomePosters items={videos} className="pt-8 pb-4" />
-      <HomePosters items={images} balanced className="pt-10 pb-16" />
+      <HomeShelves videos={videos} images={images} />
     </div>
   );
 }

@@ -1,9 +1,8 @@
-import { adsCategories, entertainment, type CatalogueCategory } from "@/lib/taxonomy";
+import { adsCategories, entertainmentCategories, type CatalogueCategory } from "@/lib/taxonomy";
 
 export type GuessedPlace = {
   section: "ads" | "entertainment";
   categorySlug: string;
-  subcategorySlug: string;
   label: string;
 };
 
@@ -41,13 +40,11 @@ function normalize(value: string) {
 function aliases(name: string, slug: string) {
   const base = [normalize(name), slug.replace(/-/g, " ")];
   const extras: string[] = [];
-  if (slug === "short-films") extras.push("films", "film", "short film", "short films");
+  if (slug === "films") extras.push("film", "films", "short film", "short films", "series", "music video", "mv", "trailer", "trailers", "promo", "promos");
   if (slug === "microdramas") extras.push("microdrama", "micro dramas");
-  if (slug === "music-videos") extras.push("music video", "mv");
-  if (slug === "ai-photoshoots") extras.push("ai photoshoot", "photoshoot", "photoshoots");
-  if (slug === "food-and-beverage") extras.push("f and b", "fnb", "food beverage");
-  if (slug === "2-5d") extras.push("2.5d", "2 5d");
-  if (slug === "avatar-screen-content") extras.push("avatar screen", "avatar + screen");
+  if (slug === "fashion-and-lifestyle") extras.push("fashion", "lifestyle", "clothing");
+  if (slug === "products-and-fmcg") extras.push("fmcg", "product", "products");
+  if (slug === "ai-talent-and-avatars") extras.push("ai talent", "avatar", "avatars");
   return [...new Set([...base, ...extras].filter(Boolean))];
 }
 
@@ -65,41 +62,19 @@ function scorePhrase(haystack: string, phrase: string) {
 type Candidate = GuessedPlace & { score: number };
 
 function collect(category: CatalogueCategory, section: "ads" | "entertainment", haystack: string) {
-  const found: Candidate[] = [];
   const categoryScore = Math.max(
     ...aliases(category.name, category.slug).map((alias) => scorePhrase(haystack, alias)),
     0,
   );
-
-  for (const topic of category.items) {
-    const topicScore = Math.max(
-      ...aliases(topic.name, topic.slug).map((alias) => scorePhrase(haystack, alias)),
-      0,
-    );
-    if (topicScore === 0 && categoryScore === 0) continue;
-    found.push({
+  if (categoryScore === 0) return [] as Candidate[];
+  return [
+    {
       section,
       categorySlug: category.slug,
-      subcategorySlug: topic.slug,
-      label: section === "entertainment" ? `Entertainment · ${topic.name}` : `${category.name} · ${topic.name}`,
-      score: topicScore * 3 + categoryScore + (section === "entertainment" && haystack.includes("entertainment") ? 8 : 0),
-    });
-  }
-
-  if (categoryScore > 0 && found.every((entry) => entry.categorySlug !== category.slug || entry.score < categoryScore)) {
-    const first = category.items[0];
-    if (first) {
-      found.push({
-        section,
-        categorySlug: category.slug,
-        subcategorySlug: first.slug,
-        label: section === "entertainment" ? `Entertainment · ${first.name}` : `${category.name} · ${first.name}`,
-        score: categoryScore,
-      });
-    }
-  }
-
-  return found;
+      label: section === "entertainment" ? `Entertainment · ${category.name}` : category.name,
+      score: categoryScore + (section === "entertainment" && haystack.includes("entertainment") ? 8 : 0),
+    },
+  ];
 }
 
 export function guessPlaceFromFilename(name: string): GuessedPlace | null {
@@ -107,10 +82,8 @@ export function guessPlaceFromFilename(name: string): GuessedPlace | null {
   if (!haystack) return null;
 
   const candidates: Candidate[] = [
-    ...collect(entertainment, "entertainment", haystack),
-    ...adsCategories.flatMap((category) =>
-      collect(category, category.slug === entertainment.slug ? "entertainment" : "ads", haystack),
-    ),
+    ...entertainmentCategories.flatMap((category) => collect(category, "entertainment", haystack)),
+    ...adsCategories.flatMap((category) => collect(category, "ads", haystack)),
   ];
 
   if (haystack.includes("entertainment") || haystack.includes("ads entertainment")) {
@@ -125,7 +98,6 @@ export function guessPlaceFromFilename(name: string): GuessedPlace | null {
   return {
     section: best.section,
     categorySlug: best.categorySlug,
-    subcategorySlug: best.subcategorySlug,
     label: best.label,
   };
 }

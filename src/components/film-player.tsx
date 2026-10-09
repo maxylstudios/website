@@ -6,6 +6,7 @@ import { VideoMark } from "@/components/video-mark";
 type Props = {
   src: string;
   title: string;
+  poster?: string;
   initialRatio?: string;
 };
 
@@ -17,16 +18,18 @@ function clock(seconds: number) {
   return `${minutes}:${String(rest).padStart(2, "0")}`;
 }
 
-export function FilmPlayer({ src, title, initialRatio = "16 / 9" }: Props) {
+export function FilmPlayer({ src, title, poster, initialRatio = "16 / 9" }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const shellRef = useRef<HTMLDivElement>(null);
   const [playing, setPlaying] = useState(false);
+  const [started, setStarted] = useState(false);
   const [time, setTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(1);
   const [muted, setMuted] = useState(false);
   const [copied, setCopied] = useState(false);
   const [ratio, setRatio] = useState(initialRatio);
+  const [controls, setControls] = useState(true);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -35,11 +38,21 @@ export function FilmPlayer({ src, title, initialRatio = "16 / 9" }: Props) {
     video.muted = muted;
   }, [volume, muted]);
 
+  useEffect(() => {
+    if (!playing) {
+      setControls(true);
+      return;
+    }
+    const hide = window.setTimeout(() => setControls(false), 2400);
+    return () => window.clearTimeout(hide);
+  }, [playing, time, controls]);
+
   function togglePlay() {
     const video = videoRef.current;
     if (!video) return;
     if (video.paused) {
       void video.play();
+      setStarted(true);
     } else {
       video.pause();
     }
@@ -84,23 +97,33 @@ export function FilmPlayer({ src, title, initialRatio = "16 / 9" }: Props) {
   const [rw, rh] = ratio.split("/").map((part) => Number(part.trim()));
   const shellStyle =
     rw > 0 && rh > 0
-      ? { aspectRatio: ratio, width: `min(100%, calc(90vh * ${rw} / ${rh}))` }
+      ? { aspectRatio: ratio, width: `min(100%, calc(82svh * ${rw} / ${rh}))` }
       : { aspectRatio: ratio, width: "100%" };
 
   return (
-    <div ref={shellRef} className="mx-auto w-full max-w-full bg-black" style={shellStyle}>
+    <div
+      ref={shellRef}
+      className="mx-auto w-full overflow-hidden rounded-2xl border border-white/15 bg-neutral-950 shadow-[0_24px_80px_rgba(0,0,0,0.55)]"
+      style={shellStyle}
+      onMouseMove={() => setControls(true)}
+      onTouchStart={() => setControls(true)}
+    >
       <div className="relative h-full w-full">
         <video
           ref={videoRef}
           src={src}
+          poster={poster}
           playsInline
-          preload="metadata"
+          preload="none"
           controlsList="nodownload"
           disablePictureInPicture
           disableRemotePlayback
           className="absolute inset-0 h-full w-full object-contain"
           onContextMenu={(event) => event.preventDefault()}
-          onPlay={() => setPlaying(true)}
+          onPlay={() => {
+            setPlaying(true);
+            setStarted(true);
+          }}
           onPause={() => setPlaying(false)}
           onTimeUpdate={(event) => setTime(event.currentTarget.currentTime)}
           onLoadedMetadata={(event) => {
@@ -113,17 +136,23 @@ export function FilmPlayer({ src, title, initialRatio = "16 / 9" }: Props) {
           onClick={togglePlay}
         />
         <VideoMark />
-        {playing ? null : (
+
+        {!playing ? (
           <button
             type="button"
             onClick={togglePlay}
-            className="absolute top-1/2 left-1/2 z-10 flex h-16 w-16 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-white text-black"
+            className="absolute top-1/2 left-1/2 z-10 flex h-14 w-14 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-white/45 bg-black/30 text-white/90 backdrop-blur-[2px] transition hover:bg-black/45 sm:h-16 sm:w-16"
             aria-label={`Play ${title}`}
           >
             <PlayIcon />
           </button>
-        )}
-        <div className="absolute inset-x-0 bottom-0 bg-black/75 px-3 pt-3 pb-3">
+        ) : null}
+
+        <div
+          className={`absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-black/90 via-black/55 to-transparent px-3 pt-10 pb-3 transition-opacity duration-300 sm:px-4 sm:pb-4 ${
+            controls || !playing ? "opacity-100" : "pointer-events-none opacity-0"
+          }`}
+        >
           <input
             type="range"
             min={0}
@@ -136,20 +165,22 @@ export function FilmPlayer({ src, title, initialRatio = "16 / 9" }: Props) {
               const video = videoRef.current;
               if (video) video.currentTime = next;
               setTime(next);
+              setStarted(true);
             }}
-            className="w-full accent-white"
+            className="film-seek w-full"
           />
-          <div className="mt-2 flex items-center gap-2">
+          <div className="mt-2.5 flex items-center gap-2.5 sm:gap-3">
             <button type="button" onClick={togglePlay} className="text-white" aria-label={playing ? "Pause" : "Play"}>
               {playing ? <PauseIcon /> : <PlayIcon />}
             </button>
-            <span className="text-xs text-white tabular-nums">
-              {clock(time)} / {clock(duration)}
+            <span className="text-[11px] text-white/85 tabular-nums sm:text-xs">
+              {clock(time)}
+              <span className="text-white/45"> / {clock(duration)}</span>
             </span>
             <button
               type="button"
               onClick={() => setMuted((value) => !value)}
-              className="ml-2 text-white"
+              className="text-white"
               aria-pressed={quiet}
               aria-label={quiet ? "Unmute" : "Mute"}
             >
@@ -163,19 +194,22 @@ export function FilmPlayer({ src, title, initialRatio = "16 / 9" }: Props) {
               value={quiet ? 0 : volume}
               aria-label="Volume"
               onChange={(event) => setLevel(Number(event.target.value))}
-              className="w-20 accent-white"
+              className="film-seek hidden w-20 sm:block"
             />
-            <button
-              type="button"
-              onClick={() => void copyLink()}
-              className="ml-auto rounded-full border border-white/25 px-3 py-1 text-xs font-bold"
-            >
-              {copied ? "Copied" : "Copy link"}
-            </button>
-            <button type="button" onClick={() => void toggleFullscreen()} className="text-white" aria-label="Full screen">
-              <FullIcon />
-            </button>
+            <div className="ml-auto flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => void copyLink()}
+                className="rounded-full border border-white/25 px-2.5 py-1 text-[11px] font-bold text-white/90 sm:px-3 sm:text-xs"
+              >
+                {copied ? "Copied" : "Copy link"}
+              </button>
+              <button type="button" onClick={() => void toggleFullscreen()} className="text-white" aria-label="Full screen">
+                <FullIcon />
+              </button>
+            </div>
           </div>
+          {!started ? <p className="sr-only">Press play to start the film.</p> : null}
         </div>
       </div>
     </div>

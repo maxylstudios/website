@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { extensionForType } from "@/lib/crop-image";
-import { adsCategory, entertainment, topicIn } from "@/lib/taxonomy";
+import { adsCategory, entertainmentCategory } from "@/lib/taxonomy";
 import type { MediaItem } from "@/lib/media";
 import { clearAdminToken, readAdminToken, setAdminToken } from "@/lib/admin-session";
 import { deleteStoredVideo, uploadVideo, videoObjectKey } from "@/lib/s3";
@@ -26,6 +26,16 @@ function schemaMessage(message: string) {
   }
   if (message.toLowerCase().includes("homepage_board") || message.toLowerCase().includes("save_homepage_board")) {
     return "Run supabase/11_homepage_board.sql in the SQL editor, then try again.";
+  }
+  if (message.toLowerCase().includes("poster_path") || message.toLowerCase().includes("save_item_poster")) {
+    return "Run supabase/13_posters.sql in the SQL editor, then try again.";
+  }
+  if (
+    message.toLowerCase().includes("item_subcategory") ||
+    message.toLowerCase().includes("choose a subcategory") ||
+    (message.toLowerCase().includes("save_media_item") && message.toLowerCase().includes("function"))
+  ) {
+    return "Run supabase/14_drop_subcategories.sql in the SQL editor, then try again.";
   }
   if (message.toLowerCase().includes("page_heroes") || message.toLowerCase().includes("save_page_heroes")) {
     return "Run supabase/12_page_heroes.sql in the SQL editor, then try again.";
@@ -103,12 +113,11 @@ export async function saveAdminMedia(formData: FormData) {
     const height = heightValue ? Number(heightValue) : null;
     const crop = kind === "video" ? { x: cropX, y: cropY } : null;
     const section = String(formData.get("section") ?? "");
-    const categorySlug = section === "entertainment" ? entertainment.slug : String(formData.get("category") ?? "");
-    const subcategorySlug = String(formData.get("subcategory") ?? "");
-    const category = section === "entertainment" ? entertainment : adsCategory(categorySlug);
-    const topic = category ? topicIn(category, subcategorySlug) : null;
-    if (!category || !topic || (section !== "ads" && section !== "entertainment")) {
-      return { ok: false as const, message: "Choose Ads or Entertainment, then a subcategory." };
+    const categorySlug = String(formData.get("category") ?? "");
+    const category =
+      section === "entertainment" ? entertainmentCategory(categorySlug) : section === "ads" ? adsCategory(categorySlug) : null;
+    if (!category || (section !== "ads" && section !== "entertainment")) {
+      return { ok: false as const, message: "Choose Ads or Entertainment, then a category." };
     }
 
     let storagePath = existingPath;
@@ -161,7 +170,7 @@ export async function saveAdminMedia(formData: FormData) {
       raw_token: token,
       item_id: itemId,
       item_title: title,
-      item_label: topic.name,
+      item_label: category.name,
       item_caption: caption,
       item_kind: kind,
       item_path: storagePath,
@@ -172,7 +181,6 @@ export async function saveAdminMedia(formData: FormData) {
       item_published: published,
       item_section: section,
       item_category: category.slug,
-      item_subcategory: topic.slug,
       item_show_on_home: showOnHome,
     });
     if (error) {
@@ -260,6 +268,25 @@ export async function saveHomepageBoard(videoIds: string[], imageIds: string[]) 
     return { ok: true as const };
   } catch (caught) {
     const message = caught instanceof Error ? caught.message : "Could not save the homepage.";
+    return { ok: false as const, message };
+  }
+}
+
+export async function saveItemPoster(id: string, path: string) {
+  try {
+    const token = await tokenOrThrow();
+    const supabase = createPublicSupabase();
+    const { error } = await supabase.rpc("save_item_poster", {
+      raw_token: token,
+      item_id: id,
+      item_path: path,
+    });
+    if (error) throw new Error(schemaMessage(error.message));
+    revalidatePath("/");
+    revalidatePath("/admin/home");
+    return { ok: true as const };
+  } catch (caught) {
+    const message = caught instanceof Error ? caught.message : "Could not save the poster.";
     return { ok: false as const, message };
   }
 }

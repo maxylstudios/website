@@ -1,8 +1,8 @@
 import { loadAdminMedia } from "@/app/admin/actions";
 import { FeatureEditor, type FeatureSlot } from "@/components/admin/feature-editor";
 import { adsCategoryKey, adsPageKey, entertainmentPageKey, entertainmentTopicKey, getPageHeroes } from "@/lib/page-heroes";
-import type { MediaItem } from "@/lib/media";
-import { adsCategories, entertainment } from "@/lib/taxonomy";
+import { catalogueSlug, type MediaItem } from "@/lib/media";
+import { adsCategories, entertainmentCategories } from "@/lib/taxonomy";
 
 function choices(items: MediaItem[], match: (item: MediaItem) => boolean) {
   return items
@@ -35,12 +35,12 @@ export default async function FeaturesAdminPage() {
       selected: heroes[entertainmentPageKey()] ?? "",
       choices: choices(items, (item) => item.section === "entertainment"),
     },
-    ...entertainment.items.map((topic) => ({
-      key: entertainmentTopicKey(topic.slug),
+    ...entertainmentCategories.map((category) => ({
+      key: entertainmentTopicKey(category.slug),
       group: "Entertainment pages",
-      label: topic.name,
-      selected: heroes[entertainmentTopicKey(topic.slug)] ?? "",
-      choices: choices(items, (item) => item.section === "entertainment" && item.subcategory_slug === topic.slug),
+      label: category.name,
+      selected: heroes[entertainmentTopicKey(category.slug)] ?? "",
+      choices: choices(items, (item) => item.section === "entertainment" && catalogueSlug(item) === category.slug),
     })),
   ];
 

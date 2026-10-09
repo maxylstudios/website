@@ -17,7 +17,7 @@ import { loadAdminItem, removeAdminMedia, saveAdminMedia } from "@/app/admin/act
 import { uploadAdminFile } from "@/lib/admin-upload";
 import { cropImage, extensionForType } from "@/lib/crop-image";
 import { closestAspect, guessPlaceFromFilename, titleFromFilename } from "@/lib/guess-place";
-import { adsCategories, adsCategory, entertainment, topicIn } from "@/lib/taxonomy";
+import { adsCategories, adsCategory, entertainmentCategory, sectionCategories } from "@/lib/taxonomy";
 
 type Props = {
   id?: string;
@@ -33,7 +33,6 @@ export function MediaEditor({ id }: Props) {
   const [title, setTitle] = useState("");
   const [section, setSection] = useState<"ads" | "entertainment">("ads");
   const [categorySlug, setCategorySlug] = useState(adsCategories[0].slug);
-  const [subcategorySlug, setSubcategorySlug] = useState(adsCategories[0].items[0].slug);
   const [caption, setCaption] = useState("");
   const [published, setPublished] = useState(true);
   const [showOnHome, setShowOnHome] = useState(false);
@@ -58,8 +57,7 @@ export function MediaEditor({ id }: Props) {
       : "image"
     : existing?.kind ?? null;
 
-  const placeTopics =
-    section === "entertainment" ? entertainment.items : (adsCategory(categorySlug)?.items ?? []);
+  const categories = sectionCategories(section);
 
   useEffect(() => {
     if (!id) return;
@@ -82,7 +80,6 @@ export function MediaEditor({ id }: Props) {
       setTitle(item.title);
       if (item.section === "entertainment" || item.section === "ads") setSection(item.section);
       if (item.category_slug) setCategorySlug(item.category_slug);
-      if (item.subcategory_slug) setSubcategorySlug(item.subcategory_slug);
       setCaption(item.caption);
       setPublished(item.published);
       setShowOnHome(Boolean(item.show_on_home));
@@ -111,7 +108,6 @@ export function MediaEditor({ id }: Props) {
     }
     setSection(guess.section);
     setCategorySlug(guess.categorySlug);
-    setSubcategorySlug(guess.subcategorySlug);
     setHint(`Auto-filled · ${guess.label}`);
   }
 
@@ -167,9 +163,9 @@ export function MediaEditor({ id }: Props) {
       setError("Add a title.");
       return;
     }
-    const chosen = section === "entertainment" ? entertainment : adsCategory(categorySlug);
-    if (!chosen || !topicIn(chosen, subcategorySlug)) {
-      setError("Choose Ads or Entertainment, then a subcategory.");
+    const chosen = section === "entertainment" ? entertainmentCategory(categorySlug) : adsCategory(categorySlug);
+    if (!chosen) {
+      setError("Choose Ads or Entertainment, then a category.");
       return;
     }
     if (!existing && !file) {
@@ -195,8 +191,7 @@ export function MediaEditor({ id }: Props) {
       if (id) form.set("id", id);
       form.set("title", title.trim());
       form.set("section", section);
-      form.set("category", section === "entertainment" ? entertainment.slug : categorySlug);
-      form.set("subcategory", subcategorySlug);
+      form.set("category", categorySlug);
       form.set("caption", caption.trim());
       form.set("published", published ? "true" : "false");
       form.set("showOnHome", showOnHome ? "true" : "false");
@@ -379,13 +374,7 @@ export function MediaEditor({ id }: Props) {
               const next = event.target.value === "entertainment" ? "entertainment" : "ads";
               setSection(next);
               setHint("");
-              if (next === "entertainment") {
-                setCategorySlug(entertainment.slug);
-                setSubcategorySlug(entertainment.items[0].slug);
-              } else {
-                setCategorySlug(adsCategories[0].slug);
-                setSubcategorySlug(adsCategories[0].items[0].slug);
-              }
+              setCategorySlug(sectionCategories(next)[0].slug);
             }}
             className={`${field} bg-black`}
           >
@@ -394,42 +383,19 @@ export function MediaEditor({ id }: Props) {
           </select>
         </label>
 
-        {section === "ads" ? (
-          <label className="mt-4 block text-sm">
-            Category
-            <select
-              value={categorySlug}
-              onChange={(event) => {
-                const next = event.target.value;
-                const category = adsCategory(next);
-                setCategorySlug(next);
-                setSubcategorySlug(category?.items[0]?.slug ?? "");
-                setHint("");
-              }}
-              className={`${field} bg-black`}
-            >
-              {adsCategories.map((category) => (
-                <option key={category.slug} value={category.slug}>
-                  {category.name}
-                </option>
-              ))}
-            </select>
-          </label>
-        ) : null}
-
         <label className="mt-4 block text-sm">
-          Subcategory
+          Category
           <select
-            value={subcategorySlug}
+            value={categorySlug}
             onChange={(event) => {
-              setSubcategorySlug(event.target.value);
+              setCategorySlug(event.target.value);
               setHint("");
             }}
             className={`${field} bg-black`}
           >
-            {placeTopics.map((item) => (
-              <option key={item.slug} value={item.slug}>
-                {item.name}
+            {categories.map((category) => (
+              <option key={category.slug} value={category.slug}>
+                {category.name}
               </option>
             ))}
           </select>

@@ -18,6 +18,7 @@ export type MediaItem = {
   height: number | null;
   published: boolean;
   show_on_home: boolean;
+  poster_path: string | null;
   created_at: string;
   section: string;
   category_slug: string;
@@ -25,7 +26,7 @@ export type MediaItem = {
 };
 
 export const mediaColumns =
-  "id, title, label, caption, kind, storage_path, aspect, crop, width, height, published, show_on_home, created_at, section, category_slug, subcategory_slug";
+  "id, title, label, caption, kind, storage_path, aspect, crop, width, height, published, show_on_home, poster_path, created_at, section, category_slug, subcategory_slug";
 
 export const aspectOptions = [
   { id: "16:9", label: "16:9", value: 16 / 9 },
@@ -70,12 +71,22 @@ export function objectPosition(crop: MediaCrop | null) {
   return `${crop?.x ?? 50}% ${crop?.y ?? 50}%`;
 }
 
-export function mediaHref(item: Pick<MediaItem, "id" | "section" | "category_slug" | "subcategory_slug">) {
-  if (item.section === "entertainment" && item.subcategory_slug) {
-    return `/entertainment/${item.subcategory_slug}/${item.id}`;
+/** Entertainment used to store the topic in subcategory_slug. Prefer category_slug after the 14 migration. */
+export function catalogueSlug(item: Pick<MediaItem, "section" | "category_slug" | "subcategory_slug">) {
+  if (item.section === "entertainment") {
+    if (item.category_slug && item.category_slug !== "entertainment") return item.category_slug;
+    return item.subcategory_slug || "";
   }
-  if (item.section === "ads" && item.category_slug && item.subcategory_slug) {
-    return `/ads/${item.category_slug}/${item.subcategory_slug}/${item.id}`;
+  return item.category_slug || "";
+}
+
+export function mediaHref(item: Pick<MediaItem, "id" | "section" | "category_slug" | "subcategory_slug">) {
+  const slug = catalogueSlug(item);
+  if (item.section === "entertainment" && slug) {
+    return `/entertainment/${slug}/${item.id}`;
+  }
+  if (item.section === "ads" && slug) {
+    return `/ads/${slug}/${item.id}`;
   }
   return `/misc/${item.id}`;
 }
@@ -97,6 +108,7 @@ function withDefaults(item: Record<string, unknown>): MediaItem {
     category_slug: String(item.category_slug ?? ""),
     subcategory_slug: String(item.subcategory_slug ?? ""),
     show_on_home: Boolean(item.show_on_home),
+    poster_path: typeof item.poster_path === "string" && item.poster_path.length > 0 ? item.poster_path : null,
   };
 }
 
@@ -161,6 +173,7 @@ export function heroAsMediaItem(path: string): MediaItem {
     height: null,
     published: true,
     show_on_home: true,
+    poster_path: null,
     created_at: "",
     section: "",
     category_slug: "",

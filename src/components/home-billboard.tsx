@@ -107,10 +107,6 @@ export function HomeBillboard({
 
   const filmHref = playHref === undefined ? mediaHref(item) : playHref;
 
-  const line =
-    item.caption?.trim() ||
-    (blurb === null ? "" : blurb || "Films and ads from the studio — shot, shaped, and finished for the screen.");
-
   const actions = (
     <div className="flex flex-wrap items-center gap-3">
       <Link
@@ -239,18 +235,8 @@ export function HomeBillboard({
         {video}
         <VideoMark />
         <div className="relative flex min-h-[min(92svh,56rem)] flex-col justify-end px-5 pb-16 pt-28 sm:px-8 sm:pb-20 lg:px-12">
-          <p className="text-xs font-semibold tracking-[0.32em] text-white uppercase drop-shadow-[0_1px_8px_rgba(0,0,0,0.85)]">
-            {kicker}
-          </p>
-          <h1 className="mt-4 max-w-3xl text-4xl leading-[0.95] font-bold text-white drop-shadow-[0_2px_16px_rgba(0,0,0,0.85)] sm:text-6xl lg:text-7xl">
-            {item.title}
-          </h1>
-          {line ? (
-            <p className="mt-4 max-w-xl text-sm leading-7 text-white/90 drop-shadow-[0_1px_10px_rgba(0,0,0,0.85)] sm:text-base">
-              {line}
-            </p>
-          ) : null}
-          <div className="mt-8">{actions}</div>
+          <h1 className="sr-only">{kicker}</h1>
+          <div>{actions}</div>
         </div>
       </div>
       {links.length > 0 ? (

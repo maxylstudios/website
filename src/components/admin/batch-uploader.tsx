@@ -6,7 +6,7 @@ import { useMemo, useState } from "react";
 import { saveAdminMedia } from "@/app/admin/actions";
 import { uploadAdminFile } from "@/lib/admin-upload";
 import { closestAspect, guessPlaceFromFilename, titleFromFilename } from "@/lib/guess-place";
-import { adsCategories, adsCategory, entertainment, topicIn } from "@/lib/taxonomy";
+import { adsCategories, sectionCategories } from "@/lib/taxonomy";
 
 type RowStatus = "ready" | "uploading" | "saving" | "done" | "error";
 
@@ -17,7 +17,6 @@ type BatchRow = {
   title: string;
   section: "ads" | "entertainment";
   categorySlug: string;
-  subcategorySlug: string;
   aspect: string;
   published: boolean;
   showOnHome: boolean;
@@ -72,11 +71,6 @@ function defaultsFromName(name: string) {
     title: titleFromFilename(name) || name,
     section: (guess?.section ?? "ads") as "ads" | "entertainment",
     categorySlug: guess?.categorySlug ?? adsCategories[0].slug,
-    subcategorySlug:
-      guess?.subcategorySlug ??
-      (guess?.section === "entertainment"
-        ? entertainment.items[0].slug
-        : adsCategories[0].items[0].slug),
     guessLabel: guess?.label ?? "",
   };
 }
@@ -89,7 +83,6 @@ export function BatchUploader() {
   const [error, setError] = useState("");
   const [defaultSection, setDefaultSection] = useState<"ads" | "entertainment">("ads");
   const [defaultCategory, setDefaultCategory] = useState(adsCategories[0].slug);
-  const [defaultSubcategory, setDefaultSubcategory] = useState(adsCategories[0].items[0].slug);
   const [defaultPublished, setDefaultPublished] = useState(true);
   const [defaultHome, setDefaultHome] = useState(false);
 
@@ -122,7 +115,6 @@ export function BatchUploader() {
         title: guessed.title,
         section: guessed.section,
         categorySlug: guessed.categorySlug,
-        subcategorySlug: guessed.subcategorySlug,
         aspect,
         published: defaultPublished,
         showOnHome: defaultHome,
@@ -147,8 +139,7 @@ export function BatchUploader() {
         return {
           ...row,
           section: defaultSection,
-          categorySlug: defaultSection === "entertainment" ? entertainment.slug : defaultCategory,
-          subcategorySlug: defaultSubcategory,
+          categorySlug: defaultCategory,
           published: defaultPublished,
           showOnHome: defaultHome,
           message: "Place set from batch defaults",
@@ -164,8 +155,7 @@ export function BatchUploader() {
         return {
           ...row,
           section: defaultSection,
-          categorySlug: defaultSection === "entertainment" ? entertainment.slug : defaultCategory,
-          subcategorySlug: defaultSubcategory,
+          categorySlug: defaultCategory,
           published: defaultPublished,
           showOnHome: defaultHome,
           message: "Place set from batch defaults",
@@ -183,8 +173,8 @@ export function BatchUploader() {
 
     for (const row of rows) {
       if (row.status !== "ready" && row.status !== "error") continue;
-      const category = row.section === "entertainment" ? entertainment : adsCategory(row.categorySlug);
-      if (!row.title.trim() || !category || !topicIn(category, row.subcategorySlug)) {
+      const categories = sectionCategories(row.section);
+      if (!row.title.trim() || !categories.some((category) => category.slug === row.categorySlug)) {
         setError(`Fix the place or title for “${row.file.name}” before starting.`);
         return;
       }
@@ -211,8 +201,7 @@ export function BatchUploader() {
         const form = new FormData();
         form.set("title", row.title.trim());
         form.set("section", row.section);
-        form.set("category", row.section === "entertainment" ? entertainment.slug : row.categorySlug);
-        form.set("subcategory", row.subcategorySlug);
+        form.set("category", row.categorySlug);
         form.set("caption", "");
         form.set("published", row.published ? "true" : "false");
         form.set("showOnHome", row.showOnHome ? "true" : "false");
@@ -243,10 +232,7 @@ export function BatchUploader() {
     }
   }
 
-  const defaultTopics =
-    defaultSection === "entertainment"
-      ? entertainment.items
-      : (adsCategory(defaultCategory)?.items ?? []);
+  const defaultCategories = sectionCategories(defaultSection);
 
   return (
     <div className="space-y-6">
@@ -323,13 +309,7 @@ export function BatchUploader() {
               onChange={(event) => {
                 const next = event.target.value === "entertainment" ? "entertainment" : "ads";
                 setDefaultSection(next);
-                if (next === "entertainment") {
-                  setDefaultCategory(entertainment.slug);
-                  setDefaultSubcategory(entertainment.items[0].slug);
-                } else {
-                  setDefaultCategory(adsCategories[0].slug);
-                  setDefaultSubcategory(adsCategories[0].items[0].slug);
-                }
+                setDefaultCategory(sectionCategories(next)[0].slug);
               }}
               className={`mt-2 ${field}`}
             >
@@ -337,38 +317,17 @@ export function BatchUploader() {
               <option value="entertainment">Entertainment</option>
             </select>
           </label>
-          {defaultSection === "ads" ? (
-            <label className="text-sm">
-              Category
-              <select
-                value={defaultCategory}
-                disabled={busy}
-                onChange={(event) => {
-                  const next = event.target.value;
-                  setDefaultCategory(next);
-                  setDefaultSubcategory(adsCategory(next)?.items[0]?.slug ?? "");
-                }}
-                className={`mt-2 ${field}`}
-              >
-                {adsCategories.map((category) => (
-                  <option key={category.slug} value={category.slug}>
-                    {category.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-          ) : null}
           <label className="text-sm">
-            Subcategory
+            Category
             <select
-              value={defaultSubcategory}
+              value={defaultCategory}
               disabled={busy}
-              onChange={(event) => setDefaultSubcategory(event.target.value)}
+              onChange={(event) => setDefaultCategory(event.target.value)}
               className={`mt-2 ${field}`}
             >
-              {defaultTopics.map((item) => (
-                <option key={item.slug} value={item.slug}>
-                  {item.name}
+              {defaultCategories.map((category) => (
+                <option key={category.slug} value={category.slug}>
+                  {category.name}
                 </option>
               ))}
             </select>
@@ -428,10 +387,7 @@ export function BatchUploader() {
 
           <ul className="space-y-3">
             {rows.map((row) => {
-              const topics =
-                row.section === "entertainment"
-                  ? entertainment.items
-                  : (adsCategory(row.categorySlug)?.items ?? []);
+              const categories = sectionCategories(row.section);
               const locked = busy || row.status === "done" || row.status === "uploading" || row.status === "saving";
 
               return (
@@ -486,11 +442,7 @@ export function BatchUploader() {
                           const next = event.target.value === "entertainment" ? "entertainment" : "ads";
                           patch(row.id, {
                             section: next,
-                            categorySlug: next === "entertainment" ? entertainment.slug : adsCategories[0].slug,
-                            subcategorySlug:
-                              next === "entertainment"
-                                ? entertainment.items[0].slug
-                                : adsCategories[0].items[0].slug,
+                            categorySlug: sectionCategories(next)[0].slug,
                           });
                         }}
                         className={`mt-2 ${field}`}
@@ -499,40 +451,17 @@ export function BatchUploader() {
                         <option value="entertainment">Entertainment</option>
                       </select>
                     </label>
-                    {row.section === "ads" ? (
-                      <label className="text-sm">
-                        Category
-                        <select
-                          value={row.categorySlug}
-                          disabled={locked}
-                          onChange={(event) => {
-                            const next = event.target.value;
-                            patch(row.id, {
-                              categorySlug: next,
-                              subcategorySlug: adsCategory(next)?.items[0]?.slug ?? "",
-                            });
-                          }}
-                          className={`mt-2 ${field}`}
-                        >
-                          {adsCategories.map((category) => (
-                            <option key={category.slug} value={category.slug}>
-                              {category.name}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-                    ) : null}
                     <label className="text-sm">
-                      Subcategory
+                      Category
                       <select
-                        value={row.subcategorySlug}
+                        value={row.categorySlug}
                         disabled={locked}
-                        onChange={(event) => patch(row.id, { subcategorySlug: event.target.value })}
+                        onChange={(event) => patch(row.id, { categorySlug: event.target.value })}
                         className={`mt-2 ${field}`}
                       >
-                        {topics.map((item) => (
-                          <option key={item.slug} value={item.slug}>
-                            {item.name}
+                        {categories.map((category) => (
+                          <option key={category.slug} value={category.slug}>
+                            {category.name}
                           </option>
                         ))}
                       </select>
