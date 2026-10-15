@@ -10,6 +10,9 @@ export type MediaItem = {
   title: string;
   label: string;
   caption: string;
+  client: string;
+  role: string;
+  style_tag: string;
   kind: "image" | "video";
   storage_path: string;
   aspect: string;
@@ -26,7 +29,7 @@ export type MediaItem = {
 };
 
 export const mediaColumns =
-  "id, title, label, caption, kind, storage_path, aspect, crop, width, height, published, show_on_home, poster_path, created_at, section, category_slug, subcategory_slug";
+  "id, title, label, caption, client, role, style_tag, kind, storage_path, aspect, crop, width, height, published, show_on_home, poster_path, created_at, section, category_slug, subcategory_slug";
 
 export const aspectOptions = [
   { id: "16:9", label: "16:9", value: 16 / 9 },
@@ -107,6 +110,9 @@ function withDefaults(item: Record<string, unknown>): MediaItem {
     section: String(item.section ?? ""),
     category_slug: String(item.category_slug ?? ""),
     subcategory_slug: String(item.subcategory_slug ?? ""),
+    client: String(item.client ?? ""),
+    role: String(item.role ?? ""),
+    style_tag: String(item.style_tag ?? ""),
     show_on_home: Boolean(item.show_on_home),
     poster_path: typeof item.poster_path === "string" && item.poster_path.length > 0 ? item.poster_path : null,
   };
@@ -165,6 +171,9 @@ export function heroAsMediaItem(path: string): MediaItem {
     title: "Hero",
     label: "",
     caption: "",
+    client: "",
+    role: "",
+    style_tag: "",
     kind: "video",
     storage_path: path,
     aspect: "16:9",
