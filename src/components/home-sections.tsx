@@ -17,21 +17,6 @@ const lanes = [
   },
 ];
 
-const notes = [
-  {
-    title: "More options",
-    line: "See your idea in many styles before you commit to one.",
-  },
-  {
-    title: "Premium, not pricey",
-    line: "Cinematic quality for a fraction of a traditional shoot’s cost and time.",
-  },
-  {
-    title: "Human taste",
-    line: "GenAI is our camera and our set. The eye behind it is ours.",
-  },
-];
-
 const studioPoints = [
   {
     label: "Ads & commercials",
@@ -107,32 +92,6 @@ export function HomeLanes() {
                 {lane.cta} →
               </span>
             </Link>
-          </li>
-        ))}
-      </ul>
-    </section>
-  );
-}
-
-export function HomeNotes() {
-  return (
-    <section className="home-reveal px-5 py-12 sm:px-8 sm:py-14">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h2 className="text-2xl font-bold sm:text-3xl">Faster than a shoot. Bigger than a set.</h2>
-        </div>
-        <Link
-          href="/about"
-          className="text-xs font-semibold tracking-[0.18em] text-[#c4b5fd] uppercase transition hover:text-white"
-        >
-          About the studio →
-        </Link>
-      </div>
-      <ul className="mt-8 grid gap-8 sm:grid-cols-3">
-        {notes.map((note) => (
-          <li key={note.title} className="border-t border-white/15 pt-5">
-            <h3 className="text-lg font-bold">{note.title}</h3>
-            <p className="mt-2 text-sm leading-6 text-white/65">{note.line}</p>
           </li>
         ))}
       </ul>

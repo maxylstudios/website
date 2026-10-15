@@ -2,7 +2,17 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { FilmPlayer } from "@/components/film-player";
-import { frameStyleForItem, getPublishedMedia, isFiled, isPortraitItem, mediaHref, mediaPublicUrl, objectPosition } from "@/lib/media";
+import {
+  frameStyleForItem,
+  getPublishedMedia,
+  isExternalUrl,
+  isFiled,
+  isKukuFmUrl,
+  isPortraitItem,
+  mediaHref,
+  mediaPublicUrl,
+  objectPosition,
+} from "@/lib/media";
 import { placeLabel } from "@/lib/taxonomy";
 
 export async function WatchFilm({ id }: { id: string }) {
@@ -57,6 +67,26 @@ export async function WatchFilm({ id }: { id: string }) {
         <div className={`mt-6 sm:mt-8 ${portrait ? "mx-auto max-w-md text-center sm:max-w-lg" : "max-w-3xl"}`}>
           <h1 className="sr-only">{item.title}</h1>
           {item.caption ? <p className="text-sm leading-7 text-muted sm:text-base">{item.caption}</p> : null}
+          {(() => {
+            const url = isExternalUrl(item.external_url);
+            if (!url) return null;
+            const kuku = isKukuFmUrl(url) || item.category_slug === "microdramas";
+            return (
+              <a
+                href={url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-5 inline-flex items-center justify-center gap-2 rounded-full border border-violet-400/40 bg-gradient-to-r from-pink-500/25 to-indigo-500/25 px-5 py-2.5 text-xs font-bold tracking-[0.08em] uppercase text-white transition hover:brightness-110"
+              >
+                {kuku ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src="/kuku-fm-mark.png" alt="" className="h-5 w-auto" />
+                ) : null}
+                <span>{kuku ? "Open on Kuku FM" : "Open link"}</span>
+                <span aria-hidden>↗</span>
+              </a>
+            );
+          })()}
         </div>
       </div>
     </article>

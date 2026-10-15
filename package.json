@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "posters:backfill": "npx --yes tsx scripts/backfill-posters.ts"
+    "posters:backfill": "npx --yes tsx scripts/backfill-posters.ts",
+    "entertainment:backfill": "node scripts/backfill-entertainment.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1144.0",

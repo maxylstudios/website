@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRef, type ReactNode } from "react";
-import { HomeContact, HomeIntro, HomeLanes, HomeNotes } from "@/components/home-sections";
+import { HomeContact, HomeIntro, HomeLanes } from "@/components/home-sections";
 import { MediaPoster } from "@/components/media-poster";
 import { catalogueSlug, isPortraitItem, mediaHref, mediaPublicUrl, type MediaItem } from "@/lib/media";
 import { adsCategory, entertainmentCategory } from "@/lib/taxonomy";
@@ -137,9 +137,6 @@ export function HomeShelves({ videos }: { videos: MediaItem[] }) {
       />
       <Between>
         <HomeLanes />
-      </Between>
-      <Between>
-        <HomeNotes />
       </Between>
       <HomeContact />
     </div>

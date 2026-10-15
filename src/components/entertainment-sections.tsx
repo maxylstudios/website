@@ -1,16 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { Bebas_Neue, Montserrat } from "next/font/google";
+import { Montserrat } from "next/font/google";
 import { MediaPoster } from "@/components/media-poster";
 import { MediaThumb } from "@/components/media-thumb";
+import { entertainmentDossier, partnerLabel } from "@/lib/entertainment-dossier";
 import { mediaHref, type MediaItem } from "@/lib/media";
-
-const display = Bebas_Neue({
-  weight: "400",
-  subsets: ["latin"],
-  variable: "--font-ent-display",
-});
 
 const ui = Montserrat({
   subsets: ["latin"],
@@ -18,123 +13,158 @@ const ui = Montserrat({
   variable: "--font-ent-ui",
 });
 
-export type EntertainmentShelf = {
+export type EntertainmentLane = {
   slug: string;
   name: string;
   href: string;
+  blurb: string;
   items: MediaItem[];
 };
 
-function ShelfCard({ item }: { item: MediaItem }) {
+function Still({ item }: { item: MediaItem }) {
+  if (item.kind === "video") {
+    return <MediaPoster item={item} className="absolute inset-0 h-full w-full object-cover" />;
+  }
+  return (
+    <MediaThumb
+      item={item}
+      fill
+      className="absolute inset-0 h-full overflow-hidden rounded-none bg-black"
+      sizes="480px"
+    />
+  );
+}
+
+function CaseStudy({ item }: { item: MediaItem }) {
   const title = item.title?.trim() || "Untitled";
+  const dossier = entertainmentDossier(item);
+  const partner = partnerLabel(dossier.url, dossier.room);
+  const kuku = partner === "Kuku FM";
+  const href = mediaHref(item);
 
   return (
-    <Link href={mediaHref(item)} className="ent-shelf-card group" aria-label={`Play ${title}`}>
-      <span className="ent-shelf-frame">
-        {item.kind === "video" ? (
-          <MediaPoster
-            item={item}
-            className="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-[1.04]"
-          />
-        ) : (
-          <MediaThumb
-            item={item}
-            fill
-            className="absolute inset-0 h-full overflow-hidden rounded-none bg-black"
-            sizes="320px"
-          />
-        )}
-        <span className="ent-shelf-veil" aria-hidden />
-        <span className="ent-shelf-title">{title}</span>
-      </span>
-    </Link>
-  );
-}
-
-function Shelf({ shelf }: { shelf: EntertainmentShelf }) {
-  if (shelf.items.length === 0) return null;
-
-  return (
-    <section className="ent-shelf">
-      <div className="ent-shelf-head">
-        <Link href={shelf.href} className="ent-shelf-name">
-          {shelf.name}
-        </Link>
-        <p className="ent-shelf-count">
-          {shelf.items.length} title{shelf.items.length === 1 ? "" : "s"}
-        </p>
-      </div>
-      <div className="row-scroll ent-shelf-rail">
-        {shelf.items.map((item) => (
-          <ShelfCard key={item.id} item={item} />
-        ))}
-      </div>
-    </section>
-  );
-}
-
-export function EntertainmentSections({ shelves }: { shelves: EntertainmentShelf[] }) {
-  const filled = shelves.filter((shelf) => shelf.items.length > 0);
-
-  return (
-    <div className={`${display.variable} ${ui.variable} ent-below`}>
-      <section className="ent-intro">
-        <p className="ent-intro-kicker">Entertainment</p>
-        <h2 className="ent-intro-title">Stories built for the big feeling.</h2>
-        <p className="ent-intro-copy">
-          Films and microdramas from Maxyl — epics, thrillers, animated worlds and bingeable cuts, made at
-          cinematic scale without the traditional production ceiling.
-        </p>
-        <div className="ent-intro-actions">
-          <Link href="/entertainment/films" className="ent-play">
-            Films
-          </Link>
-          <Link href="/entertainment/microdramas" className="ent-trailer">
-            Microdramas
-          </Link>
-        </div>
-      </section>
-
-      {filled.map((shelf) => (
-        <Shelf key={shelf.slug} shelf={shelf} />
-      ))}
-
-      <section className="ent-pitch">
+    <article className="case">
+      <p className="case-kicker">{dossier.room}</p>
+      <h3 className="case-title">
+        <Link href={href}>{title}</Link>
+      </h3>
+      <Link href={href} className="case-still" aria-label={`Watch ${title}`}>
+        <Still item={item} />
+      </Link>
+      <ul className="case-tags">
+        <li>{dossier.client}</li>
+        <li>{dossier.role}</li>
+        <li>{dossier.style}</li>
+      </ul>
+      <p className="case-body">{dossier.caption}</p>
+      <dl className="case-credits">
         <div>
-          <p className="ent-intro-kicker">Why Maxyl</p>
-          <h2 className="ent-intro-title">Faster than a shoot. Bigger than a set.</h2>
+          <dt>Studio</dt>
+          <dd>Maxyl Studios</dd>
         </div>
-        <ul className="ent-pitch-grid">
-          <li>
-            <h3>More options</h3>
-            <p>See your idea in many styles before you commit to one.</p>
-          </li>
-          <li>
-            <h3>Premium, not pricey</h3>
-            <p>Cinematic quality for a fraction of a traditional shoot’s cost and time.</p>
-          </li>
-          <li>
-            <h3>Human taste</h3>
-            <p>GenAI is our camera and our set. The eye behind it is ours.</p>
-          </li>
-        </ul>
-      </section>
+        <div>
+          <dt>Format</dt>
+          <dd>{dossier.room}</dd>
+        </div>
+        <div>
+          <dt>Look</dt>
+          <dd>{dossier.style}</dd>
+        </div>
+        <div>
+          <dt>Partner</dt>
+          <dd>{partner}</dd>
+        </div>
+      </dl>
+      <div className="case-actions">
+        <Link href={href} className="case-watch">
+          Watch
+        </Link>
+        <a href={dossier.url} target="_blank" rel="noopener noreferrer" className="case-out">
+          {kuku ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src="/kuku-fm-mark.png" alt="" className="case-mark" />
+          ) : null}
+          <span>{kuku ? "Open on Kuku FM" : "Open link"}</span>
+          <span aria-hidden>↗</span>
+        </a>
+      </div>
+    </article>
+  );
+}
 
-      <section className="ent-cta">
-        <h2 className="ent-intro-title">Ready for a film?</h2>
-        <p className="ent-intro-copy">
-          Quoted for exactly what you need: a single film, a full campaign or an ongoing slate. You bring the
-          ambition. We’ll match it.
-        </p>
-        <div className="ent-intro-actions">
-          <Link href="/contact" className="ent-play">
-            Call the studio
-          </Link>
-          <Link href="/ads" className="ent-trailer">
-            See the ads
-          </Link>
+function CaseRail({ items }: { items: MediaItem[] }) {
+  if (items.length === 0) {
+    return <p className="case-empty">Nothing filed in this room yet.</p>;
+  }
+  return (
+    <div className="case-rail">
+      {items.map((item) => (
+        <CaseStudy key={item.id} item={item} />
+      ))}
+    </div>
+  );
+}
+
+export function EntertainmentNav({ lanes }: { lanes: EntertainmentLane[] }) {
+  const ordered = [...lanes].sort((a, b) => {
+    if (a.slug === "microdramas") return -1;
+    if (b.slug === "microdramas") return 1;
+    return 0;
+  });
+
+  return (
+    <div className={`${ui.variable} case-wrap`}>
+      {ordered.map((lane) => (
+        <section key={lane.slug} className="case-room" aria-label={lane.name}>
+          <header className="case-head">
+            <div>
+              <p className="case-eyebrow">{lane.items.length} titles</p>
+              <h2 className="case-heading">{lane.name}</h2>
+            </div>
+            <Link href={lane.href} className="case-filter case-filter-on">
+              See all
+            </Link>
+          </header>
+          <CaseRail items={lane.items} />
+        </section>
+      ))}
+    </div>
+  );
+}
+
+export function EntertainmentGrid({
+  title,
+  items,
+  lanes,
+}: {
+  title: string;
+  items: MediaItem[];
+  lanes: EntertainmentLane[];
+}) {
+  return (
+    <div className={`${ui.variable} case-wrap`}>
+      <header className="case-head">
+        <div>
+          <p className="case-eyebrow">The slate</p>
+          <h2 className="case-heading">{title}</h2>
         </div>
-      </section>
+        <nav className="case-filters" aria-label="Rooms">
+          <Link href="/entertainment" className="case-filter">
+            All
+          </Link>
+          {lanes.map((lane) => (
+            <Link
+              key={lane.slug}
+              href={lane.href}
+              className={lane.name === title ? "case-filter case-filter-on" : "case-filter"}
+            >
+              {lane.name}
+              <span>{lane.items.length}</span>
+            </Link>
+          ))}
+        </nav>
+      </header>
+      <CaseRail items={items} />
     </div>
   );
 }

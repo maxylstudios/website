@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
-import { EntertainmentSections } from "@/components/entertainment-sections";
+import { EntertainmentGrid } from "@/components/entertainment-sections";
 import { EntertainmentStage } from "@/components/entertainment-stage";
 import { catalogueSlug, listPublishedMedia } from "@/lib/media";
 import { entertainmentTopicKey, getPageHeroes, pickFeatured } from "@/lib/page-heroes";
@@ -12,6 +12,11 @@ import {
 
 type PageProps = {
   params: Promise<{ slug: string }>;
+};
+
+const blurbs: Record<string, string> = {
+  films: "Epics, thrillers, and cinematic worlds made for the big feeling.",
+  microdramas: "Short, bingeable stories cut for vertical and social screens.",
 };
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
@@ -36,22 +41,20 @@ export default async function EntertainmentCategoryPage({ params }: PageProps) {
     ? [featured, ...items.filter((item) => item.id !== featured.id)]
     : items;
 
-  const shelves = entertainmentCategories.map((entry) => ({
+  const lanes = entertainmentCategories.map((entry) => ({
     slug: entry.slug,
     name: entry.name,
     href: `/entertainment/${entry.slug}`,
-    items:
-      entry.slug === category.slug
-        ? items
-        : uploaded.filter(
-            (item) => item.section === "entertainment" && catalogueSlug(item) === entry.slug,
-          ),
+    blurb: blurbs[entry.slug] ?? "Open the catalogue.",
+    items: uploaded.filter(
+      (item) => item.section === "entertainment" && catalogueSlug(item) === entry.slug,
+    ),
   }));
 
   return (
     <>
       <EntertainmentStage items={ordered} initialId={featured?.id} />
-      <EntertainmentSections shelves={shelves} />
+      <EntertainmentGrid title={category.name} items={items} lanes={lanes} />
     </>
   );
 }

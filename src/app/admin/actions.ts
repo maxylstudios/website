@@ -9,39 +9,49 @@ import { deleteStoredVideo, uploadVideo, videoObjectKey } from "@/lib/s3";
 import { createPublicSupabase, isMissingSchema } from "@/lib/supabase";
 
 function schemaMessage(message: string) {
-  if (isMissingSchema(message) || message.toLowerCase().includes("open_admin_session")) {
-    return "Run supabase/05_admin_password.sql in the SQL editor, then try again.";
+  const text = message.toLowerCase();
+  if (text.includes("save_item_entertainment")) {
+    return "Run supabase/19_entertainment_desk.sql in the SQL editor, then try again.";
   }
-  if (message.toLowerCase().includes("show_on_home") || message.toLowerCase().includes("item_show_on_home")) {
-    return "Run supabase/07_homepage.sql in the SQL editor, then try again.";
+  if (text.includes("external_url") || text.includes("save_item_external_url")) {
+    return "Run supabase/18_external_url.sql in the SQL editor, then try again.";
   }
-  if (message.toLowerCase().includes("hero_video") || message.toLowerCase().includes("save_hero_video")) {
-    return "Run supabase/09_hero_video.sql in the SQL editor, then try again.";
-  }
-  if (message.toLowerCase().includes("object_name") || message.toLowerCase().includes("ticket_path")) {
-    return "Run supabase/08_fix_upload_ticket.sql in the SQL editor, then try again.";
-  }
-  if (message.toLowerCase().includes("direct deletion from storage")) {
-    return "Run supabase/10_delete_media.sql in the SQL editor, then try again.";
-  }
-  if (message.toLowerCase().includes("homepage_board") || message.toLowerCase().includes("save_homepage_board")) {
-    return "Run supabase/11_homepage_board.sql in the SQL editor, then try again.";
-  }
-  if (message.toLowerCase().includes("poster_path") || message.toLowerCase().includes("save_item_poster")) {
-    return "Run supabase/13_posters.sql in the SQL editor, then try again.";
-  }
-  if (message.toLowerCase().includes("save_item_copy")) {
+  if (text.includes("save_item_copy")) {
     return "Run supabase/16_ads_copy.sql in the SQL editor, then try again.";
   }
+  if (text.includes("show_on_home") || text.includes("item_show_on_home")) {
+    return "Run supabase/07_homepage.sql in the SQL editor, then try again.";
+  }
+  if (text.includes("hero_video") || text.includes("save_hero_video")) {
+    return "Run supabase/09_hero_video.sql in the SQL editor, then try again.";
+  }
+  if (text.includes("object_name") || text.includes("ticket_path")) {
+    return "Run supabase/08_fix_upload_ticket.sql in the SQL editor, then try again.";
+  }
+  if (text.includes("direct deletion from storage")) {
+    return "Run supabase/10_delete_media.sql in the SQL editor, then try again.";
+  }
+  if (text.includes("homepage_board") || text.includes("save_homepage_board")) {
+    return "Run supabase/11_homepage_board.sql in the SQL editor, then try again.";
+  }
+  if (text.includes("poster_path") || text.includes("save_item_poster")) {
+    return "Run supabase/13_posters.sql in the SQL editor, then try again.";
+  }
   if (
-    message.toLowerCase().includes("item_subcategory") ||
-    message.toLowerCase().includes("choose a subcategory") ||
-    (message.toLowerCase().includes("save_media_item") && message.toLowerCase().includes("function"))
+    text.includes("item_subcategory") ||
+    text.includes("choose a subcategory") ||
+    (text.includes("save_media_item") && text.includes("function"))
   ) {
     return "Run supabase/14_drop_subcategories.sql in the SQL editor, then try again.";
   }
-  if (message.toLowerCase().includes("page_heroes") || message.toLowerCase().includes("save_page_heroes")) {
+  if (text.includes("page_heroes") || text.includes("save_page_heroes")) {
     return "Run supabase/12_page_heroes.sql in the SQL editor, then try again.";
+  }
+  if (text.includes("open_admin_session") || text.includes("admin_session_valid")) {
+    return "Run supabase/05_admin_password.sql in the SQL editor, then try again.";
+  }
+  if (isMissingSchema(message)) {
+    return message;
   }
   return message;
 }
@@ -206,6 +216,16 @@ export async function saveAdminMedia(formData: FormData) {
       if (posterError) throw new Error(schemaMessage(posterError.message));
     }
 
+    if (id) {
+      const externalUrl = String(formData.get("externalUrl") ?? "").trim();
+      const { error: linkError } = await supabase.rpc("save_item_external_url", {
+        raw_token: token,
+        item_id: id,
+        item_url: externalUrl,
+      });
+      if (linkError) throw new Error(schemaMessage(linkError.message));
+    }
+
     revalidatePath("/");
     revalidatePath("/ads");
     revalidatePath("/entertainment");
@@ -326,6 +346,38 @@ export async function saveItemCopy(id: string, title: string, caption: string) {
   }
 }
 
+export async function saveEntertainmentItem(
+  id: string,
+  title: string,
+  caption: string,
+  client: string,
+  role: string,
+  style: string,
+  url: string,
+) {
+  try {
+    const token = await tokenOrThrow();
+    const supabase = createPublicSupabase();
+    const { error } = await supabase.rpc("save_item_entertainment", {
+      raw_token: token,
+      item_id: id,
+      item_title: title,
+      item_caption: caption,
+      item_client: client,
+      item_role: role,
+      item_style: style,
+      item_url: url,
+    });
+    if (error) throw new Error(schemaMessage(error.message));
+    revalidatePath("/entertainment", "layout");
+    revalidatePath("/admin/entertainment");
+    return { ok: true as const };
+  } catch (caught) {
+    const message = caught instanceof Error ? caught.message : "Could not save the title.";
+    return { ok: false as const, message };
+  }
+}
+
 export async function savePageHeroes(heroes: Record<string, string>) {
   try {
     const token = await tokenOrThrow();
@@ -339,6 +391,7 @@ export async function savePageHeroes(heroes: Record<string, string>) {
     revalidatePath("/entertainment", "layout");
     revalidatePath("/admin/features");
     revalidatePath("/admin/ads");
+    revalidatePath("/admin/entertainment");
     return { ok: true as const };
   } catch (caught) {
     const message = caught instanceof Error ? caught.message : "Could not save the page heroes.";

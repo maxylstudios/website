@@ -35,6 +35,7 @@ export function MediaEditor({ id }: Props) {
   const [section, setSection] = useState<"ads" | "entertainment">("ads");
   const [categorySlug, setCategorySlug] = useState(adsCategories[0].slug);
   const [caption, setCaption] = useState("");
+  const [externalUrl, setExternalUrl] = useState("");
   const [published, setPublished] = useState(true);
   const [showOnHome, setShowOnHome] = useState(false);
   const [aspect, setAspect] = useState("16:9");
@@ -82,6 +83,7 @@ export function MediaEditor({ id }: Props) {
       if (item.section === "entertainment" || item.section === "ads") setSection(item.section);
       if (item.category_slug) setCategorySlug(item.category_slug);
       setCaption(item.caption);
+      setExternalUrl(item.external_url ?? "");
       setPublished(item.published);
       setShowOnHome(Boolean(item.show_on_home));
       setAspect(item.aspect);
@@ -194,6 +196,7 @@ export function MediaEditor({ id }: Props) {
       form.set("section", section);
       form.set("category", categorySlug);
       form.set("caption", caption.trim());
+      form.set("externalUrl", externalUrl.trim());
       form.set("published", published ? "true" : "false");
       form.set("showOnHome", showOnHome ? "true" : "false");
       form.set("aspect", aspect);
@@ -425,6 +428,20 @@ export function MediaEditor({ id }: Props) {
             className={`${field} resize-y`}
           />
           <span className="mt-1.5 block text-xs text-muted">Keep it brief — shown under the title on Ads cards.</span>
+        </label>
+
+        <label className="mt-4 block text-sm">
+          External link
+          <input
+            type="url"
+            value={externalUrl}
+            onChange={(event) => setExternalUrl(event.target.value)}
+            placeholder="https://kukufm.com/…"
+            className={field}
+          />
+          <span className="mt-1.5 block text-xs text-muted">
+            Optional. Films or microdramas can link out — e.g. the Kuku FM episode page.
+          </span>
         </label>
 
         <fieldset className="mt-4">
