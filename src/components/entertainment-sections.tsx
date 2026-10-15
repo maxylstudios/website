@@ -5,7 +5,7 @@ import { Montserrat } from "next/font/google";
 import { MediaPoster } from "@/components/media-poster";
 import { MediaThumb } from "@/components/media-thumb";
 import { entertainmentDossier, partnerLabel } from "@/lib/entertainment-dossier";
-import { mediaHref, type MediaItem } from "@/lib/media";
+import { isExternalUrl, mediaHref, type MediaItem } from "@/lib/media";
 
 const ui = Montserrat({
   subsets: ["latin"],
@@ -38,9 +38,11 @@ function Still({ item }: { item: MediaItem }) {
 function CaseStudy({ item }: { item: MediaItem }) {
   const title = item.title?.trim() || "Untitled";
   const dossier = entertainmentDossier(item);
-  const partner = partnerLabel(dossier.url, dossier.room);
+  const realUrl = isExternalUrl(item.external_url);
+  const partner = partnerLabel(realUrl || dossier.url, dossier.room);
   const kuku = partner === "Kuku FM";
   const href = mediaHref(item);
+  const films = dossier.room === "Films";
 
   return (
     <article className="case">
@@ -57,36 +59,40 @@ function CaseStudy({ item }: { item: MediaItem }) {
         <li>{dossier.style}</li>
       </ul>
       <p className="case-body">{dossier.caption}</p>
-      <dl className="case-credits">
-        <div>
-          <dt>Studio</dt>
-          <dd>Maxyl Studios</dd>
-        </div>
-        <div>
-          <dt>Format</dt>
-          <dd>{dossier.room}</dd>
-        </div>
-        <div>
-          <dt>Look</dt>
-          <dd>{dossier.style}</dd>
-        </div>
-        <div>
-          <dt>Partner</dt>
-          <dd>{partner}</dd>
-        </div>
-      </dl>
+      {films ? null : (
+        <dl className="case-credits">
+          <div>
+            <dt>Studio</dt>
+            <dd>Maxyl Studios</dd>
+          </div>
+          <div>
+            <dt>Format</dt>
+            <dd>{dossier.room}</dd>
+          </div>
+          <div>
+            <dt>Look</dt>
+            <dd>{dossier.style}</dd>
+          </div>
+          <div>
+            <dt>Partner</dt>
+            <dd>{partner}</dd>
+          </div>
+        </dl>
+      )}
       <div className="case-actions">
         <Link href={href} className="case-watch">
           Watch
         </Link>
-        <a href={dossier.url} target="_blank" rel="noopener noreferrer" className="case-out">
-          {kuku ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src="/kuku-fm-mark.png" alt="" className="case-mark" />
-          ) : null}
-          <span>{kuku ? "Open on Kuku FM" : "Open link"}</span>
-          <span aria-hidden>↗</span>
-        </a>
+        {realUrl ? (
+          <a href={realUrl} target="_blank" rel="noopener noreferrer" className="case-out">
+            {kuku ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src="/kuku-fm-mark.png" alt="" className="case-mark" />
+            ) : null}
+            <span>{kuku ? "Open on Kuku FM" : "Open link"}</span>
+            <span aria-hidden>↗</span>
+          </a>
+        ) : null}
       </div>
     </article>
   );

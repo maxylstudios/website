@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 import { useRef, type ReactNode } from "react";
+import { HomeFeature } from "@/components/home-feature";
 import { HomeContact, HomeIntro, HomeLanes } from "@/components/home-sections";
+import type { HomepageArt } from "@/lib/homepage-art";
 import { MediaPoster } from "@/components/media-poster";
 import { catalogueSlug, isPortraitItem, mediaHref, mediaPublicUrl, type MediaItem } from "@/lib/media";
 import { adsCategory, entertainmentCategory } from "@/lib/taxonomy";
@@ -114,7 +116,7 @@ function Between({ children }: { children: ReactNode }) {
   return <div className="border-y border-white/10">{children}</div>;
 }
 
-export function HomeShelves({ videos }: { videos: MediaItem[] }) {
+export function HomeShelves({ videos, art }: { videos: MediaItem[]; art: HomepageArt }) {
   const horizontal = videos.filter((item) => !isPortraitItem(item));
   const vertical = videos.filter(isPortraitItem);
 
@@ -135,6 +137,7 @@ export function HomeShelves({ videos }: { videos: MediaItem[] }) {
         items={vertical}
         frame="h-72 min-w-[10rem] sm:h-80 sm:min-w-[11rem]"
       />
+      <HomeFeature art={art} />
       <Between>
         <HomeLanes />
       </Between>

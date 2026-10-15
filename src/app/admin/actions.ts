@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { extensionForType } from "@/lib/crop-image";
 import { adsCategory, entertainmentCategory } from "@/lib/taxonomy";
-import type { MediaItem } from "@/lib/media";
+import { mediaPublicUrl, type MediaItem } from "@/lib/media";
 import { clearAdminToken, readAdminToken, setAdminToken } from "@/lib/admin-session";
 import { deleteStoredVideo, uploadVideo, videoObjectKey } from "@/lib/s3";
 import { createPublicSupabase, isMissingSchema } from "@/lib/supabase";
@@ -30,6 +30,9 @@ function schemaMessage(message: string) {
   }
   if (text.includes("direct deletion from storage")) {
     return "Run supabase/10_delete_media.sql in the SQL editor, then try again.";
+  }
+  if (text.includes("homepage_art") || text.includes("save_homepage_art")) {
+    return "Run supabase/20_homepage_art.sql in the SQL editor, then try again.";
   }
   if (text.includes("homepage_board") || text.includes("save_homepage_board")) {
     return "Run supabase/11_homepage_board.sql in the SQL editor, then try again.";
@@ -302,6 +305,25 @@ export async function saveHomepageBoard(videoIds: string[], imageIds: string[]) 
     return { ok: true as const };
   } catch (caught) {
     const message = caught instanceof Error ? caught.message : "Could not save the homepage.";
+    return { ok: false as const, message };
+  }
+}
+
+export async function saveHomepageArt(slot: string, path: string) {
+  try {
+    const token = await tokenOrThrow();
+    const supabase = createPublicSupabase();
+    const { error } = await supabase.rpc("save_homepage_art", {
+      raw_token: token,
+      art_slot: slot,
+      item_path: path,
+    });
+    if (error) throw new Error(schemaMessage(error.message));
+    revalidatePath("/");
+    revalidatePath("/admin/home");
+    return { ok: true as const, url: mediaPublicUrl(path) };
+  } catch (caught) {
+    const message = caught instanceof Error ? caught.message : "Could not save the homepage image.";
     return { ok: false as const, message };
   }
 }

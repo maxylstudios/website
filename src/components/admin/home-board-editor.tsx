@@ -152,7 +152,7 @@ export function HomeBoardEditor({
       <LaneEditor
         title="Landscape"
         hint="Wide films. The first shelf under the hero."
-        artClass="h-36"
+        artClass="h-36 w-64"
         posters
         posterBusy={posterBusy}
         onPoster={uploadPoster}
@@ -175,7 +175,7 @@ export function HomeBoardEditor({
       <LaneEditor
         title="Portrait"
         hint="Tall films. The shelf under the landscape films."
-        artClass="h-64"
+        artClass="h-64 w-36"
         posters
         posterBusy={posterBusy}
         onPoster={uploadPoster}
@@ -198,7 +198,7 @@ export function HomeBoardEditor({
       <LaneEditor
         title="Pictures"
         hint="The shelf under the films."
-        artClass="h-48"
+        artClass="h-48 w-48"
         items={images}
         adding={adding === "image"}
         pool={pools.image}
@@ -276,7 +276,8 @@ function LaneEditor({
           Nothing in this shelf yet.
         </p>
       ) : (
-        <div className="row-scroll mt-5 flex items-start gap-4 overflow-x-auto pb-4">
+        <div className="mt-5 w-full min-w-0 overflow-x-auto overscroll-x-contain pb-4">
+          <div className="row-scroll flex w-max items-start gap-4">
           {items.map((item) => (
             <article
               key={item.id}
@@ -286,13 +287,10 @@ function LaneEditor({
               onDrop={() => onDrop(item.id)}
               className="flex w-max shrink-0 cursor-grab flex-col active:cursor-grabbing"
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={posterSrc(item)}
-                alt=""
-                draggable={false}
-                className={`${artClass} w-auto rounded-xl border border-white/20 bg-neutral-950 object-contain`}
-              />
+              <span className={`flex items-center justify-center overflow-hidden rounded-xl border border-white/20 bg-neutral-950 ${artClass}`}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={posterSrc(item)} alt="" draggable={false} className="h-full max-h-full w-full min-w-0 object-contain" />
+              </span>
               <div className="mt-3 flex max-w-[16rem] items-center gap-2">
                 {item.kind === "video" ? (
                   <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#8b5cf6] text-black" aria-hidden>
@@ -307,12 +305,12 @@ function LaneEditor({
               </div>
               <div className="mt-2 flex max-w-[16rem] flex-wrap gap-1.5">
                 {posters ? (
-                  <label className="cursor-pointer rounded bg-[#8b5cf6] px-2 py-1 text-[11px] font-bold text-black">
+                  <label className="relative cursor-pointer overflow-hidden rounded bg-[#8b5cf6] px-2 py-1 text-[11px] font-bold text-black">
                     {posterBusy === item.id ? "Uploading" : item.poster_path ? "Replace poster" : "Poster"}
                     <input
                       type="file"
                       accept="image/*"
-                      className="sr-only"
+                      className="absolute inset-0 cursor-pointer opacity-0"
                       disabled={posterBusy === item.id}
                       onChange={(event) => {
                         const file = event.target.files?.[0];
@@ -335,6 +333,7 @@ function LaneEditor({
               </div>
             </article>
           ))}
+          </div>
         </div>
       )}
 

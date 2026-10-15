@@ -1,10 +1,16 @@
 import Link from "next/link";
 import { HomeBillboard } from "@/components/home-billboard";
 import { HomeShelves } from "@/components/home-shelves";
+import { getHomepageArt } from "@/lib/homepage-art";
 import { arrangeHomepage, getHeroVideo, getHomepageBoard, heroAsMediaItem, isPortraitItem, listPublishedMedia } from "@/lib/media";
 
 export default async function Home() {
-  const [hero, published, board] = await Promise.all([getHeroVideo(), listPublishedMedia(), getHomepageBoard()]);
+  const [hero, published, board, art] = await Promise.all([
+    getHeroVideo(),
+    listPublishedMedia(),
+    getHomepageBoard(),
+    getHomepageArt(),
+  ]);
   const { videos } = arrangeHomepage(published, board);
   const featured = videos.find((item) => !isPortraitItem(item)) ?? videos[0] ?? null;
 
@@ -23,7 +29,7 @@ export default async function Home() {
           </Link>
         </section>
       )}
-      <HomeShelves videos={videos} />
+      <HomeShelves videos={videos} art={art} />
     </div>
   );
 }

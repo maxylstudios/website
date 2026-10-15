@@ -1,5 +1,3 @@
-import { getBrowserSupabase } from "@/lib/supabase";
-
 export type UploadProgress = {
   percent: number;
   label: string;
@@ -72,6 +70,19 @@ export async function uploadAdminFile(
 ) {
   onProgress({ percent: 2, label: "Starting upload" });
 
+  if (kind === "image") {
+    onProgress({ percent: 8, label: "Uploading image" });
+    const body = new FormData();
+    body.append("file", file);
+    const uploaded = await fetch("/api/admin/upload-image", { method: "POST", body });
+    const payload = (await uploaded.json().catch(() => null)) as { path?: string; message?: string } | null;
+    if (!uploaded.ok || !payload?.path) {
+      throw new Error(payload?.message || "Upload failed.");
+    }
+    onProgress({ percent: 100, label: "Upload complete" });
+    return payload.path;
+  }
+
   const intentResponse = await fetch("/api/admin/upload-intent", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -92,15 +103,5 @@ export async function uploadAdminFile(
     return intent.path;
   }
 
-  onProgress({ percent: 8, label: "Uploading image" });
-  const supabase = getBrowserSupabase();
-  const { error } = await supabase.storage.from("media").upload(intent.path, file, {
-    contentType: intent.contentType,
-    upsert: false,
-  });
-  if (error) {
-    throw new Error(error.message || "Upload failed.");
-  }
-  onProgress({ percent: 100, label: "Upload complete" });
-  return intent.path;
+  throw new Error("Could not start the upload.");
 }

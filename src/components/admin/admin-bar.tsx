@@ -27,12 +27,12 @@ export function AdminBar() {
 
   return (
     <header className="sticky top-0 z-40 border-b border-white/10 bg-black/90 backdrop-blur">
-      <div className="mx-auto flex w-full max-w-7xl flex-wrap items-center justify-between gap-4 px-5 py-4 sm:px-8">
-        <div className="flex items-center gap-6">
+      <div className="mx-auto flex w-full min-w-0 max-w-7xl flex-wrap items-center justify-between gap-4 px-5 py-4 sm:px-8">
+        <div className="flex min-w-0 flex-wrap items-center gap-6">
           <Link href="/admin" className="text-lg font-bold tracking-tight">
             Desk
           </Link>
-          <nav className="flex items-center gap-1 text-sm">
+          <nav className="flex min-w-0 flex-wrap items-center gap-1 text-sm">
             {links.map((link) => {
               const active = link.exact ? pathname === link.href : pathname.startsWith(link.href);
               return (
