@@ -15,9 +15,22 @@ const ui = Montserrat({
 type Props = {
   items: MediaItem[];
   initialId?: string;
+  room?: string | { name: string };
 };
 
-export function EntertainmentStage({ items, initialId }: Props) {
+function roomLabel(room: Props["room"]) {
+  if (!room) return "";
+  return typeof room === "string" ? room : room.name;
+}
+
+function roomIndex(label: string) {
+  const key = label.trim().toLowerCase();
+  if (key === "films") return "01";
+  if (key === "microdramas") return "02";
+  return "";
+}
+
+export function EntertainmentStage({ items, initialId, room }: Props) {
   const playable = useMemo(
     () => items.filter((item) => item.kind === "video" || item.kind === "image"),
     [items],
@@ -47,9 +60,25 @@ export function EntertainmentStage({ items, initialId }: Props) {
   const title = active.title?.trim() || "Untitled";
   const href = mediaHref(active);
   const dossier = entertainmentDossier(active);
+  const label = roomLabel(room);
+  const slate = roomIndex(label);
 
   return (
     <div className={`${ui.variable} ent-shell`}>
+      {label ? (
+        <header className="ent-room">
+          <div className="ent-room-row">
+            <Link href="/entertainment" className="ent-room-back">
+              <span aria-hidden>←</span>
+              Entertainment
+            </Link>
+            <div className="ent-room-id">
+              {slate ? <span className="ent-room-index">{slate}</span> : null}
+              <h1 className="ent-room-title">{label}</h1>
+            </div>
+          </div>
+        </header>
+      ) : null}
       <article className="ent-stage">
         <div className="ent-stage-media">
           {active.kind === "video" ? (
@@ -73,7 +102,11 @@ export function EntertainmentStage({ items, initialId }: Props) {
 
         <div className="ent-feature-copy">
           <p className="ent-feature-kicker">Now featuring · {dossier.room}</p>
-          <h1 className="ent-feature-title">{title}</h1>
+          {room ? (
+            <h2 className="ent-feature-title">{title}</h2>
+          ) : (
+            <h1 className="ent-feature-title">{title}</h1>
+          )}
           <p className="ent-feature-line">{dossier.caption}</p>
           <div className="ent-feature-actions">
             <Link href={href} className="case-watch">

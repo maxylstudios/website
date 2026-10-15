@@ -656,6 +656,82 @@ body {
   padding: 6.5rem 4vw 2.75rem;
 }
 
+.ent-room {
+  margin-top: 4rem;
+  padding: 0.85rem 4vw 0.9rem;
+  background: #050505;
+}
+
+.ent-room-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.85rem 1rem;
+}
+
+@media (max-width: 640px) {
+  .ent-room-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.65rem;
+  }
+}
+
+.ent-room-id {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  min-width: 0;
+}
+
+.ent-room-index {
+  display: grid;
+  width: 1.7rem;
+  height: 1.7rem;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 999px;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.ent-room-title {
+  font-size: clamp(1.35rem, 2.2vw, 1.8rem);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.ent-room-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 999px;
+  padding: 0.4rem 0.8rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.ent-room-back span {
+  display: inline-block;
+  transition: transform 0.2s ease;
+}
+
+.ent-room-back:hover {
+  border-color: rgba(255, 255, 255, 0.5);
+  color: #fff;
+}
+
+.ent-room-back:hover span {
+  transform: translateX(-3px);
+}
+
 .ent-feature-kicker {
   font-size: 0.72rem;
   font-weight: 600;

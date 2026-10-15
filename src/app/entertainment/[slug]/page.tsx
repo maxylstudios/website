@@ -53,7 +53,11 @@ export default async function EntertainmentCategoryPage({ params }: PageProps) {
 
   return (
     <>
-      <EntertainmentStage items={ordered} initialId={featured?.id} />
+      <EntertainmentStage
+        items={ordered}
+        initialId={featured?.id}
+        room={category.name}
+      />
       <EntertainmentGrid title={category.name} items={items} lanes={lanes} />
     </>
   );

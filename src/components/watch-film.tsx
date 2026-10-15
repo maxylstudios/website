@@ -1,19 +1,26 @@
 import Image from "next/image";
 import Link from "next/link";
+import { Montserrat } from "next/font/google";
 import { notFound } from "next/navigation";
 import { FilmPlayer } from "@/components/film-player";
+import { entertainmentDossier, partnerLabel } from "@/lib/entertainment-dossier";
 import {
   frameStyleForItem,
   getPublishedMedia,
   isExternalUrl,
   isFiled,
-  isKukuFmUrl,
   isPortraitItem,
   mediaHref,
   mediaPublicUrl,
   objectPosition,
+  type MediaItem,
 } from "@/lib/media";
 import { placeLabel } from "@/lib/taxonomy";
+
+const dossierFont = Montserrat({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+});
 
 export async function WatchFilm({ id }: { id: string }) {
   const item = await getPublishedMedia(id);
@@ -24,6 +31,10 @@ export async function WatchFilm({ id }: { id: string }) {
   const back = mediaHref(item).split("/").slice(0, -1).join("/") || "/misc";
   const frame = frameStyleForItem(item);
   const portrait = isPortraitItem(item);
+
+  if (item.section === "entertainment") {
+    return <EntertainmentWatch item={item} url={url} back={back} frame={frame} portrait={portrait} />;
+  }
 
   return (
     <article className="min-h-[calc(100svh-4rem)] bg-black pt-20 pb-16 sm:pt-24">
@@ -67,27 +78,113 @@ export async function WatchFilm({ id }: { id: string }) {
         <div className={`mt-6 sm:mt-8 ${portrait ? "mx-auto max-w-md text-center sm:max-w-lg" : "max-w-3xl"}`}>
           <h1 className="sr-only">{item.title}</h1>
           {item.caption ? <p className="text-sm leading-7 text-muted sm:text-base">{item.caption}</p> : null}
-          {(() => {
-            const url = isExternalUrl(item.external_url);
-            if (!url) return null;
-            const kuku = isKukuFmUrl(url) || item.category_slug === "microdramas";
-            return (
-              <a
-                href={url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-5 inline-flex items-center justify-center gap-2 rounded-full border border-violet-400/40 bg-gradient-to-r from-pink-500/25 to-indigo-500/25 px-5 py-2.5 text-xs font-bold tracking-[0.08em] uppercase text-white transition hover:brightness-110"
-              >
-                {kuku ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src="/kuku-fm-mark.png" alt="" className="h-5 w-auto" />
-                ) : null}
-                <span>{kuku ? "Open on Kuku FM" : "Open link"}</span>
-                <span aria-hidden>↗</span>
-              </a>
-            );
-          })()}
+          {isExternalUrl(item.external_url) ? (
+            <a
+              href={isExternalUrl(item.external_url)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-5 inline-flex items-center justify-center gap-2 rounded-full border border-white/20 px-5 py-2.5 text-xs font-bold tracking-[0.08em] uppercase text-white transition hover:border-white/50"
+            >
+              Open link
+              <span aria-hidden>↗</span>
+            </a>
+          ) : null}
         </div>
+      </div>
+    </article>
+  );
+}
+
+function EntertainmentWatch({
+  item,
+  url,
+  back,
+  frame,
+  portrait,
+}: {
+  item: MediaItem;
+  url: string;
+  back: string;
+  frame: { aspectRatio: string };
+  portrait: boolean;
+}) {
+  const title = item.title?.trim() || "Untitled";
+  const dossier = entertainmentDossier(item);
+  const partner = partnerLabel(dossier.url, dossier.room);
+  const kuku = partner === "Kuku FM";
+
+  return (
+    <article className={`${dossierFont.className} min-h-[calc(100svh-4rem)] bg-[#050505] pt-20 pb-16 text-white sm:pt-24`}>
+      <div
+        className={`mx-auto grid w-full items-start gap-8 px-4 sm:gap-10 sm:px-6 lg:px-8 ${
+          portrait
+            ? "max-w-5xl lg:grid-cols-[minmax(16rem,28rem)_minmax(18rem,1fr)]"
+            : "max-w-6xl lg:grid-cols-[minmax(0,1.2fr)_minmax(22rem,0.9fr)]"
+        }`}
+      >
+        <div className={`min-w-0 ${portrait ? "mx-auto w-full max-w-md lg:mx-0" : "w-full"}`}>
+          {item.kind === "video" ? (
+            <FilmPlayer
+              src={url}
+              title={title}
+              poster={item.poster_path ? mediaPublicUrl(item.poster_path) : `/api/poster/${item.id}`}
+              initialRatio={frame.aspectRatio}
+            />
+          ) : (
+            <div className="relative overflow-hidden bg-neutral-950" style={frame}>
+              <Image
+                src={url}
+                alt={title}
+                fill
+                sizes="(max-width: 1024px) 100vw, 720px"
+                className="object-contain"
+                style={{ objectPosition: objectPosition(item.crop) }}
+                unoptimized
+              />
+            </div>
+          )}
+        </div>
+
+        <aside className="min-w-0 lg:sticky lg:top-24 lg:pt-1">
+          <Link href={back} className="case-kicker transition hover:text-white">
+            ← {dossier.room}
+          </Link>
+          <h1 className="mt-3 text-balance text-3xl font-semibold tracking-[-0.03em] sm:text-[2.15rem] sm:leading-[1.15]">{title}</h1>
+          <ul className="case-tags">
+            <li>{dossier.client}</li>
+            <li>{dossier.role}</li>
+            <li>{dossier.style}</li>
+          </ul>
+          <p className="mt-4 text-sm leading-7 text-white/75">{dossier.caption}</p>
+          <dl className="case-credits">
+            <div>
+              <dt>Studio</dt>
+              <dd>Maxyl Studios</dd>
+            </div>
+            <div>
+              <dt>Format</dt>
+              <dd>{dossier.room}</dd>
+            </div>
+            <div>
+              <dt>Look</dt>
+              <dd>{dossier.style}</dd>
+            </div>
+            <div>
+              <dt>Partner</dt>
+              <dd>{partner}</dd>
+            </div>
+          </dl>
+          <div className="case-actions">
+            <a href={dossier.url} target="_blank" rel="noopener noreferrer" className="case-out">
+              {kuku ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src="/kuku-fm-mark.png" alt="" className="case-mark" />
+              ) : null}
+              <span>{kuku ? "Open on Kuku FM" : "Open link"}</span>
+              <span aria-hidden>↗</span>
+            </a>
+          </div>
+        </aside>
       </div>
     </article>
   );
