@@ -1,4 +1,5 @@
-import { DeleteObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { DeleteObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { Upload } from "@aws-sdk/lib-storage";
 import { Readable } from "node:stream";
 import type { ReadableStream as WebReadableStream } from "node:stream/web";
@@ -58,6 +59,23 @@ export async function uploadVideo(key: string, body: Uint8Array | ReadableStream
   });
   await upload.done();
   return videoPublicUrl(key);
+}
+
+/** Browser uploads straight to S3 so Vercel’s 4.5MB body limit is not hit. */
+export async function createVideoUploadTarget(contentType: string, extension: string) {
+  const key = videoObjectKey(extension);
+  const command = new PutObjectCommand({
+    Bucket: required("AWS_S3_BUCKET"),
+    Key: key,
+    ContentType: contentType,
+  });
+  const uploadUrl = await getSignedUrl(client(), command, { expiresIn: 60 * 30 });
+  return {
+    key,
+    uploadUrl,
+    path: videoPublicUrl(key),
+    contentType,
+  };
 }
 
 export async function deleteStoredVideo(path: string) {
