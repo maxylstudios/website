@@ -7,6 +7,7 @@ import { logoutAdmin } from "@/app/admin/actions";
 const links = [
   { href: "/admin", label: "Library", exact: true },
   { href: "/admin/home", label: "Homepage", exact: true },
+  { href: "/admin/ads", label: "Ads page", exact: true },
   { href: "/admin/media/new", label: "Upload", exact: true },
   { href: "/admin/media/batch", label: "Batch", exact: true },
   { href: "/admin/hero", label: "Hero", exact: true },

@@ -1,10 +1,17 @@
 "use client";
 
 import Link from "next/link";
+import { Instrument_Serif } from "next/font/google";
 import { useEffect, useRef, useState } from "react";
 import { SectionLinks } from "@/components/section-links";
 import { VideoMark } from "@/components/video-mark";
 import { mediaHref, mediaPublicUrl, type MediaItem } from "@/lib/media";
+
+const heroDisplay = Instrument_Serif({
+  subsets: ["latin"],
+  weight: "400",
+  style: ["normal", "italic"],
+});
 
 function VolumeCast({ muted }: { muted: boolean }) {
   return (
@@ -82,6 +89,8 @@ type Props = {
   layout?: "overlay" | "stage";
   /** null hides the film link. Omit it to open the catalogue film. */
   playHref?: string | null;
+  /** Logo watermark on the video. Off for the homepage hero. */
+  showMark?: boolean;
 };
 
 export function HomeBillboard({
@@ -93,6 +102,7 @@ export function HomeBillboard({
   links = [],
   layout = "overlay",
   playHref,
+  showMark = true,
 }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [muted, setMuted] = useState(true);
@@ -187,41 +197,47 @@ export function HomeBillboard({
           }}
         >
           {video}
-          <VideoMark />
+          {showMark ? <VideoMark /> : null}
           <div
-            className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_top,black_0%,rgba(0,0,0,0.72)_18%,transparent_46%)]"
+            className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_30%_45%,rgba(0,0,0,0.55)_0%,transparent_55%),linear-gradient(to_top,rgba(0,0,0,0.88)_0%,rgba(0,0,0,0.35)_28%,transparent_58%)]"
             aria-hidden
           />
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 flex flex-col gap-6 px-5 pb-8 sm:px-8 lg:flex-row lg:items-end lg:justify-between lg:px-12 lg:pb-10">
-            <div className="max-w-xl">
-              <span className="mb-4 block h-0.5 w-10 bg-[#8b5cf6]" aria-hidden />
-              <h1 className="text-4xl leading-[1.05] font-bold sm:text-5xl">Ads and films.</h1>
-              <p className="mt-3 max-w-md text-sm leading-6 text-white/80 sm:text-base">
-                Commercials, product films, and pictures for brands.
-              </p>
-            </div>
-            <div className="pointer-events-auto flex flex-wrap items-center gap-3">
+
+          <div className="pointer-events-none absolute inset-0 flex items-center px-5 sm:px-10 lg:px-16">
+            <h1 className="hero-title-card">
+              <span className="hero-title-era-row">
+                <span className="hero-title-era-a">A</span>
+                <span className={`${heroDisplay.className} hero-title-era`}>New Era</span>
+                <span className="hero-title-era-of">of</span>
+              </span>
+              <span className={`${heroDisplay.className} hero-title-word`}>Storytelling.</span>
+              <span className="hero-title-rule" aria-hidden />
+              <span className="hero-title-kicker hero-title-kicker-late">A New Way to</span>
+              <span className={`${heroDisplay.className} hero-title-phrase`}>Bring Them to Life</span>
+            </h1>
+          </div>
+
+          <div className="pointer-events-auto absolute inset-x-0 bottom-0 flex flex-wrap items-center gap-3 px-5 pb-8 sm:px-10 sm:pb-10 lg:px-16">
+            <Link
+              href="/ads"
+              className="rounded bg-white px-5 py-3 text-sm font-bold text-black transition hover:bg-white/90"
+            >
+              See the ads
+            </Link>
+            <Link
+              href="/entertainment"
+              className="rounded border border-white/40 px-5 py-3 text-sm font-bold transition hover:border-white"
+            >
+              Entertainment
+            </Link>
+            {filmHref ? (
               <Link
-                href="/ads"
-                className="rounded bg-white px-5 py-3 text-sm font-bold text-black transition hover:bg-white/90"
+                href={filmHref}
+                className="px-2 py-3 text-sm font-bold text-white/80 transition hover:text-white"
               >
-                See the ads
+                This film
               </Link>
-              <Link
-                href="/entertainment"
-                className="rounded border border-white/40 px-5 py-3 text-sm font-bold transition hover:border-white"
-              >
-                Entertainment
-              </Link>
-              {filmHref ? (
-                <Link
-                  href={filmHref}
-                  className="px-2 py-3 text-sm font-bold text-white/80 transition hover:text-white"
-                >
-                  This film
-                </Link>
-              ) : null}
-            </div>
+            ) : null}
           </div>
         </div>
         {links.length > 0 ? <SectionLinks links={links} className="px-5 py-5 sm:px-8 lg:px-12" /> : null}
@@ -233,7 +249,7 @@ export function HomeBillboard({
     <section className="bg-black">
       <div className="relative isolate min-h-[min(92svh,56rem)] w-full overflow-hidden">
         {video}
-        <VideoMark />
+        {showMark ? <VideoMark /> : null}
         <div className="relative flex min-h-[min(92svh,56rem)] flex-col justify-end px-5 pb-16 pt-28 sm:px-8 sm:pb-20 lg:px-12">
           <h1 className="sr-only">{kicker}</h1>
           <div>{actions}</div>

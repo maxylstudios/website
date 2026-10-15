@@ -6,23 +6,24 @@ const hand = Caveat({ subsets: ["latin"], weight: ["500", "700"] });
 
 export const metadata: Metadata = {
   title: "About us",
-  description: "Maxyl Studios is a GenAI film studio for ads, product films, and entertainment.",
+  description:
+    "Born from YAIL Studios and Mixbreed Studios, Maxyl is an AI-first production ecosystem for commercials, entertainment, and new cinematic experiences.",
 };
 
 const notes = [
   {
-    title: "More tries",
-    line: "Ten looks before lunch. Keep the one that sells.",
+    title: "More Creative Freedom",
+    line: "Explore more concepts, visual styles, and ambitious ideas without traditional production limits.",
     sketch: <BoardSketch />,
   },
   {
-    title: "Fewer days",
-    line: "A product film does not wait on a unit, a location, or a week in the edit.",
+    title: "Faster Turnarounds",
+    line: "From concept to final cut, AI-powered workflows make production faster and easier to scale.",
     sketch: <ClockSketch />,
   },
   {
-    title: "Still directed",
-    line: "GenAI is the camera and the set. The taste is still ours.",
+    title: "Smarter Budgets",
+    line: "Achieve cinematic quality and bigger creative ambitions at a fraction of traditional production costs.",
     sketch: <LensSketch />,
   },
 ];
@@ -32,10 +33,15 @@ export default function AboutPage() {
     <div className="bg-black px-5 pb-24 pt-28 sm:px-10">
       <p className="text-xs font-semibold tracking-[0.32em] text-[#c4b5fd] uppercase">About us</p>
       <h1 className={`${hand.className} mt-4 max-w-4xl text-6xl leading-[0.9] font-bold text-white sm:text-8xl`}>
-        Drawn fast. Cut faster.
+        Two Studios. One Extraordinary Vision.
       </h1>
-      <p className="mt-6 max-w-2xl text-base leading-7 text-white/75 sm:text-lg">
-        Maxyl is a GenAI film studio. We make commercials, product films, and entertainment by generating the picture, directing it, and finishing it while the idea is still warm.
+      <p className="mt-6 max-w-3xl text-base leading-7 text-white/75 sm:text-lg">
+        Born from the coming together of two creative forces,{" "}
+        <span className="font-semibold text-white">YAIL Studios and Mixbreed Studios</span>, Maxyl is
+        reimagining the future of filmmaking. We&apos;re building an AI-first production ecosystem where
+        storytelling, technology, and imagination work together to break creative boundaries. From commercials
+        and entertainment to entirely new cinematic experiences, we&apos;re not just creating content.
+        We&apos;re shaping what&apos;s next!
       </p>
 
       <ul className="mt-14 grid gap-6 lg:grid-cols-3">
@@ -54,16 +60,21 @@ export default function AboutPage() {
 
       <div className="mt-16 grid items-center gap-10 lg:grid-cols-[1.1fr_0.9fr]">
         <div>
-          <h2 className={`${hand.className} text-5xl leading-none font-bold sm:text-6xl`}>The efficiency is the point.</h2>
+          <h2 className={`${hand.className} text-5xl leading-none font-bold sm:text-6xl`}>
+            Big Ideas. Smarter Production.
+          </h2>
           <p className="mt-5 max-w-xl text-base leading-7 text-white/75">
-            A brand can try another cast, another world, another ending without rebuilding the shoot. GenAI makes that cheap and quick. Ads stay in one room. Entertainment stays in the other. Fashion films, product reels, and microdramas do not share a pile.
+            Great filmmaking takes imagination, time, and resources. At Maxyl, we use AI-powered workflows and
+            human creativity to make ambitious production faster, more flexible, and cost-effective. From
+            commercials and product films to microdramas and original entertainment, we bring cinematic quality
+            to every scale and budget.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Link href="/ads" className="rounded bg-white px-5 py-3 text-sm font-bold text-black">
-              See the ads
+              Explore Our Work
             </Link>
             <Link href="/contact" className="rounded border border-[#c4b5fd]/60 px-5 py-3 text-sm font-bold text-[#c4b5fd]">
-              Call the studio
+              Let’s Create Together
             </Link>
           </div>
         </div>

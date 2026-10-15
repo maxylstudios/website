@@ -5,15 +5,15 @@ import { arrangeHomepage, getHeroVideo, getHomepageBoard, heroAsMediaItem, isPor
 
 export default async function Home() {
   const [hero, published, board] = await Promise.all([getHeroVideo(), listPublishedMedia(), getHomepageBoard()]);
-  const { videos, images } = arrangeHomepage(published, board);
+  const { videos } = arrangeHomepage(published, board);
   const featured = videos.find((item) => !isPortraitItem(item)) ?? videos[0] ?? null;
 
   return (
     <div className="bg-black">
       {hero ? (
-        <HomeBillboard item={heroAsMediaItem(hero.storage_path)} layout="stage" playHref={null} />
+        <HomeBillboard item={heroAsMediaItem(hero.storage_path)} layout="stage" playHref={null} showMark={false} />
       ) : featured ? (
-        <HomeBillboard item={featured} layout="stage" />
+        <HomeBillboard item={featured} layout="stage" showMark={false} />
       ) : (
         <section className="flex min-h-[calc(100svh-4rem)] flex-col justify-end px-5 pb-12 pt-24 sm:px-10">
           <p className="text-xs font-semibold tracking-[0.32em] text-muted uppercase">Maxyl Studios</p>
@@ -23,7 +23,7 @@ export default async function Home() {
           </Link>
         </section>
       )}
-      <HomeShelves videos={videos} images={images} />
+      <HomeShelves videos={videos} />
     </div>
   );
 }

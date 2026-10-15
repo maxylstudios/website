@@ -371,7 +371,13 @@ export function MediaEditor({ id }: Props) {
 
         <label className="mt-5 block text-sm">
           Title
-          <input value={title} onChange={(event) => setTitle(event.target.value)} className={field} />
+          <input
+            value={title}
+            onChange={(event) => setTitle(event.target.value)}
+            placeholder="Shown on Ads gallery cards"
+            className={field}
+          />
+          <span className="mt-1.5 block text-xs text-muted">Appears under the poster on Ads.</span>
         </label>
 
         <label className="mt-4 block text-sm">
@@ -410,13 +416,15 @@ export function MediaEditor({ id }: Props) {
         </label>
 
         <label className="mt-4 block text-sm">
-          Caption
+          Short caption
           <textarea
             value={caption}
             onChange={(event) => setCaption(event.target.value)}
-            rows={4}
+            rows={3}
+            placeholder="One short line under the title"
             className={`${field} resize-y`}
           />
+          <span className="mt-1.5 block text-xs text-muted">Keep it brief — shown under the title on Ads cards.</span>
         </label>
 
         <fieldset className="mt-4">

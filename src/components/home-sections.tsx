@@ -5,36 +5,42 @@ const lanes = [
     href: "/ads",
     kicker: "Catalogue",
     title: "Ads",
-    text: "Fashion, product, automotive, and the rest of the commercial shelf — sorted by category.",
+    text: "Commercials, product films, testimonials and brand imagery across fashion, automotive, beauty, tech, food and more.",
     cta: "Browse ads",
   },
   {
     href: "/entertainment",
     kicker: "Catalogue",
-    title: "Entertainment",
-    text: "Films and microdramas from the studio. Two rooms, no mixed pile.",
-    cta: "Browse entertainment",
+    title: "Films",
+    text: "Epics, thrillers, animated worlds and bingeable microdramas, made at cinematic scale.",
+    cta: "Browse films",
   },
 ];
 
 const notes = [
   {
-    title: "More tries",
-    line: "Ten looks before lunch. Keep the one that sells.",
+    title: "More options",
+    line: "See your idea in many styles before you commit to one.",
   },
   {
-    title: "Fewer days",
-    line: "A product film does not wait on a unit, a location, or a week in the edit.",
+    title: "Premium, not pricey",
+    line: "Cinematic quality for a fraction of a traditional shoot’s cost and time.",
   },
   {
-    title: "Still directed",
-    line: "GenAI is the camera and the set. The taste is still ours.",
+    title: "Human taste",
+    line: "GenAI is our camera and our set. The eye behind it is ours.",
   },
 ];
 
 const studioPoints = [
-  { label: "Ads", detail: "Commercials filed by category" },
-  { label: "Films", detail: "Entertainment and microdramas" },
+  {
+    label: "Ads & commercials",
+    detail: "Commercials, product films and imagery for brands that refuse to look ordinary.",
+  },
+  {
+    label: "Films & entertainment",
+    detail: "Epics, thrillers, animated worlds and bingeable microdramas, made at cinematic scale.",
+  },
 ];
 
 export function HomeIntro() {
@@ -42,12 +48,13 @@ export function HomeIntro() {
     <section className="home-reveal bg-[linear-gradient(180deg,rgba(139,92,246,0.08),transparent_42%),#000] px-5 py-12 sm:px-8 sm:py-14">
       <div className="grid items-end gap-10 lg:grid-cols-[1.15fr_0.85fr] lg:gap-16">
         <div>
-          <p className="text-xs font-semibold tracking-[0.28em] text-[#c4b5fd] uppercase">The studio</p>
-          <h2 className="mt-4 text-3xl leading-tight font-bold sm:text-5xl">
-            GenAI films for brands and stories.
+          <h2 className="text-3xl leading-tight font-bold sm:text-5xl">
+            Give every story the sky it deserves.
           </h2>
           <p className="mt-5 text-base leading-7 text-white/70">
-            Maxyl makes commercials, product films, and entertainment by generating the picture, directing it, and finishing it while the idea is still warm.
+            Too many great ideas were shrunk to fit a budget, a set or a schedule. With GenAI, Maxyl takes the
+            ceiling away. Oceans, empires, whole galaxies, or one face in perfect light: we build at the scale
+            the story was always meant to have.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Link href="/ads" className="rounded bg-white px-5 py-3 text-sm font-bold text-black transition hover:bg-white/90">
@@ -57,11 +64,11 @@ export function HomeIntro() {
               href="/entertainment"
               className="rounded border border-[#c4b5fd]/55 px-5 py-3 text-sm font-bold text-[#c4b5fd] transition hover:border-[#c4b5fd] hover:text-white"
             >
-              See entertainment
+              See the films
             </Link>
           </div>
         </div>
-        <ul className="grid gap-4 sm:grid-cols-3 lg:grid-cols-1">
+        <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
           {studioPoints.map((point) => (
             <li key={point.label} className="border-t border-white/20 pt-4">
               <p className="text-sm font-bold tracking-[0.16em] text-[#c4b5fd] uppercase">{point.label}</p>
@@ -80,10 +87,10 @@ export function HomeLanes() {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-xs font-semibold tracking-[0.28em] text-[#c4b5fd] uppercase">Where to look</p>
-          <h2 className="mt-3 text-2xl font-bold sm:text-3xl">Two catalogues.</h2>
+          <h2 className="mt-3 text-2xl font-bold sm:text-3xl">Everything we’ve conjured, in two catalogues.</h2>
         </div>
         <p className="max-w-md text-sm leading-6 text-white/60 sm:text-right">
-          Ads stay in one room. Entertainment stays in the other.
+          From filming sneakers to sea monsters, new phones to old myths, nothing is off the table.
         </p>
       </div>
       <ul className="mt-8 grid gap-4 md:grid-cols-2">
@@ -112,8 +119,7 @@ export function HomeNotes() {
     <section className="home-reveal px-5 py-12 sm:px-8 sm:py-14">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-xs font-semibold tracking-[0.28em] text-[#c4b5fd] uppercase">How we work</p>
-          <h2 className="mt-3 text-2xl font-bold sm:text-3xl">Efficiency is the point.</h2>
+          <h2 className="text-2xl font-bold sm:text-3xl">Faster than a shoot. Bigger than a set.</h2>
         </div>
         <Link
           href="/about"
@@ -139,10 +145,10 @@ export function HomeContact() {
     <section className="home-reveal border-t border-white/10 bg-[linear-gradient(0deg,rgba(139,92,246,0.1),transparent_50%)] px-5 py-12 sm:px-8 sm:py-14">
       <div className="grid items-end gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:gap-16">
         <div>
-          <p className="text-xs font-semibold tracking-[0.28em] text-[#c4b5fd] uppercase">Next step</p>
-          <h2 className="mt-4 text-3xl font-bold sm:text-4xl">Ready for a film?</h2>
+          <h2 className="text-3xl font-bold sm:text-4xl">Ready for a film?</h2>
           <p className="mt-4 text-sm leading-6 text-white/70">
-            Quoted for the piece you need — a single film, a campaign, or an ongoing slate. Two people answer the phone.
+            Quoted for exactly what you need: a single film, a full campaign or an ongoing slate. You bring the
+            ambition. We’ll match it!
           </p>
         </div>
         <div className="flex flex-wrap gap-3 lg:justify-end">

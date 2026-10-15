@@ -37,7 +37,8 @@ export function SiteFooter() {
             <span className="text-[11px] font-semibold tracking-[0.32em] text-white/90 uppercase">Studios</span>
           </Link>
           <p className="mt-5 max-w-sm text-sm leading-6 text-white/65">
-            A GenAI film studio for commercials, product films, and entertainment — directed and finished while the idea is still warm.
+            A GenAI studio for commercials, product films, cinema and microdramas, built at blockbuster scale
+            without the blockbuster wait or budget.
           </p>
         </div>
 

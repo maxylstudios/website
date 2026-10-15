@@ -30,6 +30,9 @@ function schemaMessage(message: string) {
   if (message.toLowerCase().includes("poster_path") || message.toLowerCase().includes("save_item_poster")) {
     return "Run supabase/13_posters.sql in the SQL editor, then try again.";
   }
+  if (message.toLowerCase().includes("save_item_copy")) {
+    return "Run supabase/16_ads_copy.sql in the SQL editor, then try again.";
+  }
   if (
     message.toLowerCase().includes("item_subcategory") ||
     message.toLowerCase().includes("choose a subcategory") ||
@@ -302,6 +305,27 @@ export async function saveItemPoster(id: string, path: string) {
   }
 }
 
+export async function saveItemCopy(id: string, title: string, caption: string) {
+  try {
+    const token = await tokenOrThrow();
+    const supabase = createPublicSupabase();
+    const { error } = await supabase.rpc("save_item_copy", {
+      raw_token: token,
+      item_id: id,
+      item_title: title,
+      item_caption: caption,
+    });
+    if (error) throw new Error(schemaMessage(error.message));
+    revalidatePath("/");
+    revalidatePath("/ads", "layout");
+    revalidatePath("/admin/ads");
+    return { ok: true as const };
+  } catch (caught) {
+    const message = caught instanceof Error ? caught.message : "Could not save the title and caption.";
+    return { ok: false as const, message };
+  }
+}
+
 export async function savePageHeroes(heroes: Record<string, string>) {
   try {
     const token = await tokenOrThrow();
@@ -314,6 +338,7 @@ export async function savePageHeroes(heroes: Record<string, string>) {
     revalidatePath("/ads", "layout");
     revalidatePath("/entertainment", "layout");
     revalidatePath("/admin/features");
+    revalidatePath("/admin/ads");
     return { ok: true as const };
   } catch (caught) {
     const message = caught instanceof Error ? caught.message : "Could not save the page heroes.";

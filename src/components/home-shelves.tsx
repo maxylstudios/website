@@ -68,7 +68,7 @@ function Shelf({ title, note, items, frame }: { title: string; note: string; ite
       <div className="flex items-end justify-between gap-4 px-5 sm:px-8">
         <div>
           <h2 className="text-xl font-bold sm:text-2xl">{title}</h2>
-          <p className="mt-1 text-xs tracking-[0.18em] text-[#c4b5fd] uppercase">{note}</p>
+          <p className="mt-1 max-w-2xl text-sm leading-5 text-[#c4b5fd]">{note}</p>
         </div>
         <div className="flex gap-2">
           <button
@@ -114,21 +114,30 @@ function Between({ children }: { children: ReactNode }) {
   return <div className="border-y border-white/10">{children}</div>;
 }
 
-export function HomeShelves({ videos, images }: { videos: MediaItem[]; images: MediaItem[] }) {
+export function HomeShelves({ videos }: { videos: MediaItem[] }) {
   const horizontal = videos.filter((item) => !isPortraitItem(item));
   const vertical = videos.filter(isPortraitItem);
 
   return (
     <div className="bg-black pb-2">
-      <Shelf title="Landscape" note="Wide films" items={horizontal} frame="h-40 min-w-[14rem] sm:h-48 sm:min-w-[17rem]" />
+      <Shelf
+        title="Landscape Films & Commercials"
+        note="Explore cinematic films and ads across photorealism, animation, fantasy and more."
+        items={horizontal}
+        frame="h-40 min-w-[14rem] sm:h-48 sm:min-w-[17rem]"
+      />
       <Between>
         <HomeIntro />
       </Between>
-      <Shelf title="Portrait" note="Tall films" items={vertical} frame="h-72 min-w-[10rem] sm:h-80 sm:min-w-[11rem]" />
+      <Shelf
+        title="Vertical Films & Commercials"
+        note="A collection of short-form films, microdramas, product campaigns and AI-powered visual storytelling."
+        items={vertical}
+        frame="h-72 min-w-[10rem] sm:h-80 sm:min-w-[11rem]"
+      />
       <Between>
         <HomeLanes />
       </Between>
-      <Shelf title="Pictures" note="Stills" items={images} frame="h-64 min-w-[10rem] sm:h-72 sm:min-w-[12rem]" />
       <Between>
         <HomeNotes />
       </Between>
