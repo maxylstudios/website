@@ -1,3 +1,5 @@
+import { getBrowserSupabase } from "@/lib/supabase";
+
 export type UploadProgress = {
   percent: number;
   label: string;
@@ -70,19 +72,8 @@ export async function uploadAdminFile(
 ) {
   onProgress({ percent: 2, label: "Starting upload" });
 
-  if (kind === "image") {
-    onProgress({ percent: 8, label: "Uploading image" });
-    const body = new FormData();
-    body.append("file", file);
-    const uploaded = await fetch("/api/admin/upload-image", { method: "POST", body });
-    const payload = (await uploaded.json().catch(() => null)) as { path?: string; message?: string } | null;
-    if (!uploaded.ok || !payload?.path) {
-      throw new Error(payload?.message || "Upload failed.");
-    }
-    onProgress({ percent: 100, label: "Upload complete" });
-    return payload.path;
-  }
-
+  // Images and videos upload straight to storage from the browser.
+  // Never route the file through a Vercel function — production caps the body at 4.5MB.
   const intentResponse = await fetch("/api/admin/upload-intent", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -99,6 +90,20 @@ export async function uploadAdminFile(
   if (intent.mode === "s3") {
     onProgress({ percent: 6, label: "Uploading to storage" });
     await putWithProgress(intent.uploadUrl, file, intent.contentType, onProgress);
+    onProgress({ percent: 100, label: "Upload complete" });
+    return intent.path;
+  }
+
+  if (intent.mode === "supabase") {
+    onProgress({ percent: 8, label: "Uploading image" });
+    const supabase = getBrowserSupabase();
+    const { error } = await supabase.storage.from("media").upload(intent.path, file, {
+      contentType: intent.contentType,
+      upsert: false,
+    });
+    if (error) {
+      throw new Error(error.message || "Upload failed.");
+    }
     onProgress({ percent: 100, label: "Upload complete" });
     return intent.path;
   }
