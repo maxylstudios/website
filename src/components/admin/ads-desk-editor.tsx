@@ -3,11 +3,19 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { saveItemCopy, saveItemPoster, savePageHeroes } from "@/app/admin/actions";
+import {
+  hideCatalogueCategory,
+  restoreCatalogueCategory,
+  saveCatalogueOrder,
+  saveItemCopy,
+  saveItemPoster,
+  savePageHeroes,
+} from "@/app/admin/actions";
 import { posterSrc } from "@/components/home-shelves";
 import { uploadAdminFile } from "@/lib/admin-upload";
+import type { HiddenCategory } from "@/lib/hidden-categories";
 import { adsCategoryKey, adsPageKey } from "@/lib/page-heroes";
-import type { MediaItem } from "@/lib/media";
+import { sortCatalogue, type MediaItem } from "@/lib/media";
 import { adsCategories } from "@/lib/taxonomy";
 
 type Draft = { title: string; caption: string };
@@ -15,21 +23,38 @@ type Draft = { title: string; caption: string };
 const field =
   "w-full rounded-lg border border-white/10 bg-black/50 px-2.5 py-2 text-sm outline-none transition focus:border-white/35";
 
+function move(items: MediaItem[], id: string, direction: -1 | 1) {
+  const index = items.findIndex((item) => item.id === id);
+  const next = index + direction;
+  if (index < 0 || next < 0 || next >= items.length) return items;
+  const copy = items.slice();
+  const [picked] = copy.splice(index, 1);
+  copy.splice(next, 0, picked);
+  return copy;
+}
+
 export function AdsDeskEditor({
   items,
   heroes,
+  hidden,
   message,
 }: {
   items: MediaItem[];
   heroes: Record<string, string>;
+  hidden: HiddenCategory[];
   message: string;
 }) {
   const router = useRouter();
-  const ads = useMemo(() => items.filter((item) => item.section === "ads"), [items]);
+  const ads = useMemo(() => sortCatalogue(items.filter((item) => item.section === "ads")), [items]);
+  const hiddenSlugs = useMemo(
+    () => new Set(hidden.filter((row) => row.section === "ads").map((row) => row.slug)),
+    [hidden],
+  );
 
   const [drafts, setDrafts] = useState<Record<string, Draft>>(() =>
     Object.fromEntries(ads.map((item) => [item.id, { title: item.title, caption: item.caption }])),
   );
+  const [order, setOrder] = useState(() => ads.map((item) => item.id));
   const [heroPicks, setHeroPicks] = useState(() => {
     const next: Record<string, string> = {
       [adsPageKey()]: heroes[adsPageKey()] ?? "",
@@ -46,6 +71,12 @@ export function AdsDeskEditor({
   const [error, setError] = useState(message);
   const [saved, setSaved] = useState("");
 
+  const byId = useMemo(() => new Map(ads.map((item) => [item.id, item])), [ads]);
+  const orderedAds = useMemo(
+    () => order.map((id) => byId.get(id)).filter((item): item is MediaItem => Boolean(item)),
+    [byId, order],
+  );
+
   const dirtyIds = useMemo(() => {
     return ads
       .filter((item) => {
@@ -55,6 +86,11 @@ export function AdsDeskEditor({
       })
       .map((item) => item.id);
   }, [ads, drafts]);
+
+  const orderDirty = useMemo(() => {
+    const current = ads.map((item) => item.id).join(",");
+    return order.join(",") !== current;
+  }, [ads, order]);
 
   const heroesDirty = useMemo(() => {
     if ((heroPicks[adsPageKey()] ?? "") !== (heroes[adsPageKey()] ?? "")) return true;
@@ -69,17 +105,16 @@ export function AdsDeskEditor({
     return adsCategories
       .filter((category) => filter === "all" || category.slug === filter)
       .map((category) => {
-        const list = ads.filter((item) => {
+        const list = orderedAds.filter((item) => {
           if (item.category_slug !== category.slug) return false;
           if (!needle) return true;
           const draft = drafts[item.id];
           const hay = `${item.title} ${item.caption} ${draft?.title ?? ""} ${draft?.caption ?? ""}`.toLowerCase();
           return hay.includes(needle);
         });
-        return { category, list };
-      })
-      .filter((group) => filter !== "all" || group.list.length > 0);
-  }, [ads, drafts, filter, query]);
+        return { category, list, hidden: hiddenSlugs.has(category.slug) };
+      });
+  }, [drafts, filter, hiddenSlugs, orderedAds, query]);
 
   function patchDraft(id: string, next: Partial<Draft>) {
     setSaved("");
@@ -87,6 +122,25 @@ export function AdsDeskEditor({
       ...current,
       [id]: { title: current[id]?.title ?? "", caption: current[id]?.caption ?? "", ...next },
     }));
+  }
+
+  function reorderInCategory(categorySlug: string, id: string, direction: -1 | 1) {
+    setSaved("");
+    setOrder((current) => {
+      const categoryIds = current.filter((entry) => byId.get(entry)?.category_slug === categorySlug);
+      const moved = move(
+        categoryIds.map((entry) => byId.get(entry)!).filter(Boolean),
+        id,
+        direction,
+      ).map((item) => item.id);
+      let cursor = 0;
+      return current.map((entry) => {
+        if (byId.get(entry)?.category_slug !== categorySlug) return entry;
+        const next = moved[cursor];
+        cursor += 1;
+        return next;
+      });
+    });
   }
 
   async function uploadPoster(id: string, file: File) {
@@ -106,6 +160,21 @@ export function AdsDeskEditor({
     } finally {
       setPosterBusy(null);
     }
+  }
+
+  async function toggleCategory(slug: string, hiddenNow: boolean) {
+    setBusy(true);
+    setError("");
+    const result = hiddenNow
+      ? await restoreCatalogueCategory("ads", slug)
+      : await hideCatalogueCategory("ads", slug);
+    setBusy(false);
+    if (!result.ok) {
+      setError(result.message);
+      return;
+    }
+    setSaved(hiddenNow ? "Category restored." : "Category removed from the site.");
+    router.refresh();
   }
 
   async function saveEverything() {
@@ -128,6 +197,15 @@ export function AdsDeskEditor({
       }
     }
 
+    if (orderDirty) {
+      const result = await saveCatalogueOrder(order);
+      if (!result.ok) {
+        setBusy(false);
+        setError(result.message);
+        return;
+      }
+    }
+
     if (heroesDirty) {
       const result = await savePageHeroes({ ...heroes, ...heroPicks });
       if (!result.ok) {
@@ -142,7 +220,8 @@ export function AdsDeskEditor({
     router.refresh();
   }
 
-  const adsVideos = ads.filter((item) => item.kind === "video");
+  const adsVideos = orderedAds.filter((item) => item.kind === "video");
+  const canSave = dirtyIds.length > 0 || heroesDirty || orderDirty;
 
   return (
     <div>
@@ -152,15 +231,13 @@ export function AdsDeskEditor({
           <h1 className="mt-1 text-2xl font-bold sm:text-3xl">Manage the Ads reel</h1>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          {dirtyIds.length > 0 ? (
-            <span className="text-xs tracking-[0.14em] text-[#c4b5fd] uppercase">{dirtyIds.length} unsaved</span>
-          ) : null}
+          {canSave ? <span className="text-xs tracking-[0.14em] text-[#c4b5fd] uppercase">Unsaved</span> : null}
           <Link href="/ads" className="rounded border border-white/20 px-3 py-2 text-sm font-bold text-white/80 hover:border-white/40 hover:text-white">
             Open Ads
           </Link>
           <button
             type="button"
-            disabled={busy || (dirtyIds.length === 0 && !heroesDirty)}
+            disabled={busy || !canSave}
             onClick={() => void saveEverything()}
             className="rounded bg-[#8b5cf6] px-4 py-2 text-sm font-bold text-black disabled:opacity-40"
           >
@@ -197,31 +274,33 @@ export function AdsDeskEditor({
               ))}
             </select>
           </label>
-          {adsCategories.map((category) => {
-            const key = adsCategoryKey(category.slug);
-            const choices = adsVideos.filter((item) => item.category_slug === category.slug);
-            return (
-              <label key={category.slug} className="grid grid-cols-1 items-center gap-2 px-3 py-2 sm:grid-cols-[11rem_1fr]">
-                <span className="truncate text-sm text-white/70">{category.name}</span>
-                <select
-                  value={heroPicks[key] ?? ""}
-                  onChange={(event) => {
-                    setSaved("");
-                    setHeroPicks((current) => ({ ...current, [key]: event.target.value }));
-                  }}
-                  className={field}
-                >
-                  <option value="">Automatic</option>
-                  {choices.map((item) => (
-                    <option key={item.id} value={item.id}>
-                      {item.title}
-                      {item.published ? "" : " (draft)"}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            );
-          })}
+          {adsCategories
+            .filter((category) => !hiddenSlugs.has(category.slug))
+            .map((category) => {
+              const key = adsCategoryKey(category.slug);
+              const choices = adsVideos.filter((item) => item.category_slug === category.slug);
+              return (
+                <label key={category.slug} className="grid grid-cols-1 items-center gap-2 px-3 py-2 sm:grid-cols-[11rem_1fr]">
+                  <span className="truncate text-sm text-white/70">{category.name}</span>
+                  <select
+                    value={heroPicks[key] ?? ""}
+                    onChange={(event) => {
+                      setSaved("");
+                      setHeroPicks((current) => ({ ...current, [key]: event.target.value }));
+                    }}
+                    className={field}
+                  >
+                    <option value="">Automatic</option>
+                    {choices.map((item) => (
+                      <option key={item.id} value={item.id}>
+                        {item.title}
+                        {item.published ? "" : " (draft)"}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              );
+            })}
         </div>
       </section>
 
@@ -237,21 +316,35 @@ export function AdsDeskEditor({
           {adsCategories.map((category) => (
             <option key={category.slug} value={category.slug}>
               {category.name}
+              {hiddenSlugs.has(category.slug) ? " (removed)" : ""}
             </option>
           ))}
         </select>
       </div>
 
       <div className="mt-6 space-y-6">
-        {groups.map(({ category, list }) => (
+        {groups.map(({ category, list, hidden: isHidden }) => (
           <section key={category.slug} className="overflow-hidden rounded-xl border border-white/12">
-            <div className="flex items-center justify-between gap-3 border-b border-white/10 bg-white/[0.03] px-3 py-2">
-              <h2 className="text-sm font-bold">{category.name}</h2>
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 bg-white/[0.03] px-3 py-2">
+              <h2 className="text-sm font-bold">
+                {category.name}
+                {isHidden ? <span className="ml-2 text-xs font-semibold text-amber-200/80">Removed from site</span> : null}
+              </h2>
               <div className="flex items-center gap-3 text-xs text-muted">
                 <span>{list.length}</span>
-                <Link href={`/ads/${category.slug}`} className="hover:text-white">
-                  View
-                </Link>
+                {!isHidden ? (
+                  <Link href={`/ads/${category.slug}`} className="hover:text-white">
+                    View
+                  </Link>
+                ) : null}
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => void toggleCategory(category.slug, isHidden)}
+                  className="font-semibold text-white/55 uppercase tracking-[0.12em] hover:text-white"
+                >
+                  {isHidden ? "Restore" : "Delete category"}
+                </button>
               </div>
             </div>
 
@@ -259,7 +352,7 @@ export function AdsDeskEditor({
               <p className="px-3 py-3 text-sm text-muted">Nothing here yet.</p>
             ) : (
               <ul className="divide-y divide-white/8">
-                {list.map((item) => {
+                {list.map((item, index) => {
                   const draft = drafts[item.id] ?? { title: item.title, caption: item.caption };
                   const dirty = draft.title !== item.title || draft.caption !== item.caption;
                   return (
@@ -290,13 +383,31 @@ export function AdsDeskEditor({
                         className={`${field} col-span-2 sm:col-span-1`}
                       />
 
-                      <div className="col-span-2 flex items-center justify-end gap-2 sm:col-span-1">
-                        <label className="cursor-pointer text-[11px] tracking-[0.12em] text-white/45 uppercase hover:text-white">
-                          {posterBusy === item.id ? "…" : "Poster"}
+                      <div className="col-span-2 flex flex-wrap items-center justify-end gap-2 sm:col-span-1">
+                        <button
+                          type="button"
+                          aria-label={`Move ${item.title} earlier`}
+                          disabled={index === 0}
+                          onClick={() => reorderInCategory(category.slug, item.id, -1)}
+                          className="rounded bg-white/15 px-2 py-1 text-[11px] font-bold disabled:opacity-30"
+                        >
+                          Up
+                        </button>
+                        <button
+                          type="button"
+                          aria-label={`Move ${item.title} later`}
+                          disabled={index === list.length - 1}
+                          onClick={() => reorderInCategory(category.slug, item.id, 1)}
+                          className="rounded bg-white/15 px-2 py-1 text-[11px] font-bold disabled:opacity-30"
+                        >
+                          Down
+                        </button>
+                        <label className="relative cursor-pointer overflow-hidden rounded bg-white/15 px-2 py-1 text-[11px] font-bold">
+                          {posterBusy === item.id ? "…" : item.poster_path ? "Poster" : "Add poster"}
                           <input
                             type="file"
                             accept="image/*"
-                            className="sr-only"
+                            className="absolute inset-0 cursor-pointer opacity-0"
                             disabled={posterBusy === item.id}
                             onChange={(event) => {
                               const file = event.target.files?.[0];

@@ -33,7 +33,7 @@ function pick<T>(list: T[], seed: string, salt: string) {
 }
 
 export function partnerLabel(url: string, room: EntertainmentDossier["room"]) {
-  if (room === "Microdramas" || /kukufm/i.test(url)) return "Kuku FM";
+  if (room === "Microdramas" || /kuku/i.test(url)) return "Kuku TV";
   if (url.includes("instagram.com")) return "Instagram";
   if (url.includes("youtube.com")) return "YouTube";
   if (url.includes("x.com") || url.includes("twitter.com")) return "X";
@@ -54,7 +54,7 @@ export function entertainmentDossier(
   const caption =
     item.caption?.trim() ||
     (micro
-      ? `${title} is a Maxyl microdrama — a short, bingeable story cut for the phone and carried on Kuku FM.`
+      ? `${title} is a Maxyl microdrama — a short, bingeable story cut for the phone and carried on Kuku TV.`
       : `${title} is an original Maxyl film. GenAI is the camera and the set. The cut, the grade, and the taste stay with the studio.`);
 
   return {

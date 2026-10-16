@@ -1,8 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { VideoMark } from "@/components/video-mark";
-
 type Props = {
   src: string;
   title: string;
@@ -135,7 +133,6 @@ export function FilmPlayer({ src, title, poster, initialRatio = "16 / 9" }: Prop
           }}
           onClick={togglePlay}
         />
-        <VideoMark />
 
         {!playing ? (
           <button

@@ -2,7 +2,6 @@
 
 import Image from "next/image";
 import { useState } from "react";
-import { VideoMark } from "@/components/video-mark";
 import { frameStyleForItem, mediaPublicUrl, objectPosition, type MediaItem } from "@/lib/media";
 
 type Props = {
@@ -56,7 +55,6 @@ export function MediaThumb({
               }
             }}
           />
-          <VideoMark />
         </>
       ) : (
         <Image

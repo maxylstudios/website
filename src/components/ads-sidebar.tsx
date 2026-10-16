@@ -3,14 +3,15 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { adsCategories } from "@/lib/taxonomy";
+import type { CatalogueCategory } from "@/lib/taxonomy";
 
 type Props = {
+  categories: CatalogueCategory[];
   counts: Record<string, number>;
   total: number;
 };
 
-export function AdsSidebar({ counts, total }: Props) {
+export function AdsSidebar({ categories, counts, total }: Props) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
 
@@ -20,7 +21,7 @@ export function AdsSidebar({ counts, total }: Props) {
 
   const activeSlug = pathname.startsWith("/ads/") ? (pathname.split("/")[2] ?? "") : "";
   const activeName =
-    adsCategories.find((category) => category.slug === activeSlug)?.name ?? "All ads";
+    categories.find((category) => category.slug === activeSlug)?.name ?? "All ads";
 
   return (
     <>
@@ -64,7 +65,7 @@ export function AdsSidebar({ counts, total }: Props) {
               <span className="ads-side-count">{total}</span>
             </Link>
 
-            {adsCategories.map((category) => {
+            {categories.map((category) => {
               const href = `/ads/${category.slug}`;
               const active = activeSlug === category.slug;
               const count = counts[category.slug] ?? 0;

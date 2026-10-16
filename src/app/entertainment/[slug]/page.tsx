@@ -33,10 +33,10 @@ export default async function EntertainmentCategoryPage({ params }: PageProps) {
   if (!category) notFound();
 
   const [uploaded, heroes] = await Promise.all([listPublishedMedia(), getPageHeroes()]);
-  const items = uploaded.filter(
-    (item) => item.section === "entertainment" && catalogueSlug(item) === category.slug,
-  );
-  const featured = pickFeatured(items, heroes[entertainmentTopicKey(category.slug)]);
+  const vault = uploaded.filter((item) => item.section === "entertainment");
+  const items = vault.filter((item) => catalogueSlug(item) === category.slug);
+  // Microdrama hero can feature a Films title — it plays here, but stays on the Films catalogue.
+  const featured = pickFeatured(items, heroes[entertainmentTopicKey(category.slug)], vault);
   const ordered = featured
     ? [featured, ...items.filter((item) => item.id !== featured.id)]
     : items;

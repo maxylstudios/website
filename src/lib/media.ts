@@ -23,6 +23,8 @@ export type MediaItem = {
   published: boolean;
   show_on_home: boolean;
   poster_path: string | null;
+  sort_order: number;
+  show_partner: boolean;
   created_at: string;
   section: string;
   category_slug: string;
@@ -30,7 +32,7 @@ export type MediaItem = {
 };
 
 export const mediaColumns =
-  "id, title, label, caption, client, role, style_tag, external_url, kind, storage_path, aspect, crop, width, height, published, show_on_home, poster_path, created_at, section, category_slug, subcategory_slug";
+  "id, title, label, caption, client, role, style_tag, external_url, kind, storage_path, aspect, crop, width, height, published, show_on_home, poster_path, sort_order, show_partner, created_at, section, category_slug, subcategory_slug";
 
 export const aspectOptions = [
   { id: "16:9", label: "16:9", value: 16 / 9 },
@@ -105,7 +107,7 @@ const catalogueColumns =
 const legacyColumns =
   "id, title, label, caption, kind, storage_path, aspect, crop, width, height, published, created_at";
 
-function withDefaults(item: Record<string, unknown>): MediaItem {
+export function withDefaults(item: Record<string, unknown>): MediaItem {
   return {
     ...(item as MediaItem),
     section: String(item.section ?? ""),
@@ -117,7 +119,16 @@ function withDefaults(item: Record<string, unknown>): MediaItem {
     external_url: String(item.external_url ?? ""),
     show_on_home: Boolean(item.show_on_home),
     poster_path: typeof item.poster_path === "string" && item.poster_path.length > 0 ? item.poster_path : null,
+    sort_order: Number.isFinite(Number(item.sort_order)) ? Number(item.sort_order) : 0,
+    show_partner: item.show_partner === undefined || item.show_partner === null ? true : Boolean(item.show_partner),
   };
+}
+
+export function sortCatalogue(items: MediaItem[]) {
+  return [...items].sort((a, b) => {
+    if (a.sort_order !== b.sort_order) return a.sort_order - b.sort_order;
+    return b.created_at.localeCompare(a.created_at);
+  });
 }
 
 export function isExternalUrl(value: string | null | undefined) {
@@ -125,15 +136,26 @@ export function isExternalUrl(value: string | null | undefined) {
   return /^https?:\/\//i.test(url) ? url : "";
 }
 
-export function isKukuFmUrl(value: string | null | undefined) {
+export function isKukuTvUrl(value: string | null | undefined) {
   const url = isExternalUrl(value);
   if (!url) return false;
   try {
     const host = new URL(url).hostname.replace(/^www\./, "");
-    return host === "kukufm.com" || host.endsWith(".kukufm.com");
+    return (
+      host === "kukufm.com" ||
+      host.endsWith(".kukufm.com") ||
+      host === "kukutv.com" ||
+      host.endsWith(".kukutv.com") ||
+      /^kuku/i.test(host)
+    );
   } catch {
-    return /kukufm/i.test(url);
+    return /kuku/i.test(url);
   }
+}
+
+/** @deprecated Use isKukuTvUrl */
+export function isKukuFmUrl(value: string | null | undefined) {
+  return isKukuTvUrl(value);
 }
 
 export async function listPublishedMedia() {
@@ -143,6 +165,7 @@ export async function listPublishedMedia() {
       .from("media_items")
       .select(mediaColumns)
       .eq("published", true)
+      .order("sort_order", { ascending: true })
       .order("created_at", { ascending: false });
 
     if (!primary.error && primary.data) {
@@ -202,6 +225,8 @@ export function heroAsMediaItem(path: string): MediaItem {
     published: true,
     show_on_home: true,
     poster_path: null,
+    sort_order: 0,
+    show_partner: true,
     created_at: "",
     section: "",
     category_slug: "",

@@ -3,15 +3,25 @@
 import { revalidatePath } from "next/cache";
 import { extensionForType } from "@/lib/crop-image";
 import { adsCategory, entertainmentCategory } from "@/lib/taxonomy";
-import { mediaPublicUrl, type MediaItem } from "@/lib/media";
+import { mediaPublicUrl, withDefaults, type MediaItem } from "@/lib/media";
 import { clearAdminToken, readAdminToken, setAdminToken } from "@/lib/admin-session";
 import { deleteStoredVideo, uploadVideo, videoObjectKey } from "@/lib/s3";
 import { createPublicSupabase, isMissingSchema } from "@/lib/supabase";
 
 function schemaMessage(message: string) {
   const text = message.toLowerCase();
+  if (
+    text.includes("save_catalogue_order") ||
+    text.includes("hide_catalogue_category") ||
+    text.includes("restore_catalogue_category") ||
+    text.includes("hidden_categories") ||
+    text.includes("show_partner") ||
+    text.includes("sort_order")
+  ) {
+    return "Run supabase/21_catalogue_desk.sql in the SQL editor, then try again.";
+  }
   if (text.includes("save_item_entertainment")) {
-    return "Run supabase/19_entertainment_desk.sql in the SQL editor, then try again.";
+    return "Run supabase/21_catalogue_desk.sql in the SQL editor, then try again.";
   }
   if (text.includes("external_url") || text.includes("save_item_external_url")) {
     return "Run supabase/18_external_url.sql in the SQL editor, then try again.";
@@ -99,7 +109,10 @@ export async function loadAdminMedia() {
   const supabase = createPublicSupabase();
   const { data, error } = await supabase.rpc("list_admin_media", { raw_token: token });
   if (error) return { items: [] as MediaItem[], message: schemaMessage(error.message) };
-  return { items: (data ?? []) as MediaItem[], message: "" };
+  return {
+    items: ((data ?? []) as Record<string, unknown>[]).map((item) => withDefaults(item)),
+    message: "",
+  };
 }
 
 export async function loadAdminItem(id: string) {
@@ -376,6 +389,7 @@ export async function saveEntertainmentItem(
   role: string,
   style: string,
   url: string,
+  showPartner = true,
 ) {
   try {
     const token = await tokenOrThrow();
@@ -389,6 +403,7 @@ export async function saveEntertainmentItem(
       item_role: role,
       item_style: style,
       item_url: url,
+      item_show_partner: showPartner,
     });
     if (error) throw new Error(schemaMessage(error.message));
     revalidatePath("/entertainment", "layout");
@@ -396,6 +411,69 @@ export async function saveEntertainmentItem(
     return { ok: true as const };
   } catch (caught) {
     const message = caught instanceof Error ? caught.message : "Could not save the title.";
+    return { ok: false as const, message };
+  }
+}
+
+export async function saveCatalogueOrder(ids: string[]) {
+  try {
+    const token = await tokenOrThrow();
+    const supabase = createPublicSupabase();
+    const { error } = await supabase.rpc("save_catalogue_order", {
+      raw_token: token,
+      item_ids: ids,
+    });
+    if (error) throw new Error(schemaMessage(error.message));
+    revalidatePath("/");
+    revalidatePath("/ads", "layout");
+    revalidatePath("/entertainment", "layout");
+    revalidatePath("/admin/ads");
+    revalidatePath("/admin/entertainment");
+    return { ok: true as const };
+  } catch (caught) {
+    const message = caught instanceof Error ? caught.message : "Could not save the order.";
+    return { ok: false as const, message };
+  }
+}
+
+export async function hideCatalogueCategory(section: "ads" | "entertainment", slug: string) {
+  try {
+    const token = await tokenOrThrow();
+    const supabase = createPublicSupabase();
+    const { error } = await supabase.rpc("hide_catalogue_category", {
+      raw_token: token,
+      cat_section: section,
+      cat_slug: slug,
+    });
+    if (error) throw new Error(schemaMessage(error.message));
+    revalidatePath("/ads", "layout");
+    revalidatePath("/entertainment", "layout");
+    revalidatePath("/admin/ads");
+    revalidatePath("/admin/entertainment");
+    return { ok: true as const };
+  } catch (caught) {
+    const message = caught instanceof Error ? caught.message : "Could not remove the category.";
+    return { ok: false as const, message };
+  }
+}
+
+export async function restoreCatalogueCategory(section: "ads" | "entertainment", slug: string) {
+  try {
+    const token = await tokenOrThrow();
+    const supabase = createPublicSupabase();
+    const { error } = await supabase.rpc("restore_catalogue_category", {
+      raw_token: token,
+      cat_section: section,
+      cat_slug: slug,
+    });
+    if (error) throw new Error(schemaMessage(error.message));
+    revalidatePath("/ads", "layout");
+    revalidatePath("/entertainment", "layout");
+    revalidatePath("/admin/ads");
+    revalidatePath("/admin/entertainment");
+    return { ok: true as const };
+  } catch (caught) {
+    const message = caught instanceof Error ? caught.message : "Could not restore the category.";
     return { ok: false as const, message };
   }
 }

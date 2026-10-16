@@ -17,9 +17,9 @@ export default async function Home() {
   return (
     <div className="bg-black">
       {hero ? (
-        <HomeBillboard item={heroAsMediaItem(hero.storage_path)} layout="stage" playHref={null} showMark={false} />
+        <HomeBillboard item={heroAsMediaItem(hero.storage_path)} layout="stage" playHref={null} />
       ) : featured ? (
-        <HomeBillboard item={featured} layout="stage" showMark={false} />
+        <HomeBillboard item={featured} layout="stage" />
       ) : (
         <section className="flex min-h-[calc(100svh-4rem)] flex-col justify-end px-5 pb-12 pt-24 sm:px-10">
           <p className="text-xs font-semibold tracking-[0.32em] text-muted uppercase">Maxyl Studios</p>

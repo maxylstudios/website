@@ -440,7 +440,7 @@ export function MediaEditor({ id }: Props) {
             className={field}
           />
           <span className="mt-1.5 block text-xs text-muted">
-            Optional. Films or microdramas can link out — e.g. the Kuku FM episode page.
+            Optional. Films or microdramas can link out — e.g. the Kuku TV episode page.
           </span>
         </label>
 

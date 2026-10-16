@@ -1,12 +1,13 @@
 import { AdsSidebar } from "@/components/ads-sidebar";
+import { getHiddenCategories, visibleCategories } from "@/lib/hidden-categories";
 import { listPublishedMedia } from "@/lib/media";
-import { adsCategories } from "@/lib/taxonomy";
 
 export default async function AdsLayout({ children }: { children: React.ReactNode }) {
-  const uploaded = await listPublishedMedia();
+  const [uploaded, hidden] = await Promise.all([listPublishedMedia(), getHiddenCategories()]);
+  const categories = visibleCategories("ads", hidden);
   const films = uploaded.filter((item) => item.section === "ads");
   const counts = Object.fromEntries(
-    adsCategories.map((category) => [
+    categories.map((category) => [
       category.slug,
       films.filter((item) => item.category_slug === category.slug).length,
     ]),
@@ -14,7 +15,7 @@ export default async function AdsLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="ads-desk bg-black">
-      <AdsSidebar counts={counts} total={films.length} />
+      <AdsSidebar categories={categories} counts={counts} total={films.length} />
       <div className="ads-main min-w-0 flex-1">{children}</div>
     </div>
   );

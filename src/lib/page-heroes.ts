@@ -28,9 +28,15 @@ export async function getPageHeroes() {
   }
 }
 
-export function pickFeatured(films: MediaItem[], heroId: string | undefined) {
+export function pickFeatured(
+  films: MediaItem[],
+  heroId: string | undefined,
+  lookup: MediaItem[] = films,
+) {
   if (heroId) {
-    const chosen = films.find((item) => item.id === heroId && item.kind === "video");
+    const chosen =
+      lookup.find((item) => item.id === heroId && item.kind === "video") ??
+      films.find((item) => item.id === heroId && item.kind === "video");
     if (chosen) return chosen;
   }
   return (

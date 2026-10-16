@@ -4,7 +4,6 @@ import Link from "next/link";
 import { Instrument_Serif } from "next/font/google";
 import { useEffect, useRef, useState } from "react";
 import { SectionLinks } from "@/components/section-links";
-import { VideoMark } from "@/components/video-mark";
 import { mediaHref, mediaPublicUrl, type MediaItem } from "@/lib/media";
 
 const heroDisplay = Instrument_Serif({
@@ -89,8 +88,6 @@ type Props = {
   layout?: "overlay" | "stage";
   /** null hides the film link. Omit it to open the catalogue film. */
   playHref?: string | null;
-  /** Logo watermark on the video. Off for the homepage hero. */
-  showMark?: boolean;
 };
 
 export function HomeBillboard({
@@ -102,7 +99,6 @@ export function HomeBillboard({
   links = [],
   layout = "overlay",
   playHref,
-  showMark = true,
 }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [muted, setMuted] = useState(true);
@@ -197,7 +193,6 @@ export function HomeBillboard({
           }}
         >
           {video}
-          {showMark ? <VideoMark /> : null}
           <div
             className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_30%_45%,rgba(0,0,0,0.55)_0%,transparent_55%),linear-gradient(to_top,rgba(0,0,0,0.88)_0%,rgba(0,0,0,0.35)_28%,transparent_58%)]"
             aria-hidden
@@ -249,7 +244,6 @@ export function HomeBillboard({
     <section className="bg-black">
       <div className="relative isolate min-h-[min(92svh,56rem)] w-full overflow-hidden">
         {video}
-        {showMark ? <VideoMark /> : null}
         <div className="relative flex min-h-[min(92svh,56rem)] flex-col justify-end px-5 pb-16 pt-28 sm:px-8 sm:pb-20 lg:px-12">
           <h1 className="sr-only">{kicker}</h1>
           <div>{actions}</div>

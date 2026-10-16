@@ -7,19 +7,19 @@ const cards = [
     slot: "card-worlds" as const,
     index: "01",
     title: "Worlds",
-    text: "Cities, weather, creatures. Built for the shot, not rented for the day.",
+    text: "Places that exist only in our heads, now real enough to stand in.",
   },
   {
     slot: "card-faces" as const,
     index: "02",
     title: "Faces",
-    text: "Close-ups that hold. Performance without a call sheet or a twelve-hour day.",
+    text: "Tears that feel real, smiles that reach the eyes. Emotion you can read in a single frame.",
   },
   {
     slot: "card-campaigns" as const,
     index: "03",
     title: "Campaigns",
-    text: "A brand film at trailer scale, on a calendar that used to be a fantasy.",
+    text: "Brand films with the scale of a blockbuster, made in weeks instead of months. Big ideas no longer have to wait.",
   },
 ];
 
@@ -72,19 +72,19 @@ export function HomeFeature({ art }: { art: HomepageArt }) {
         <div className="relative grid gap-10 px-5 py-20 sm:px-10 lg:grid-cols-[1.15fr_0.85fr] lg:items-end lg:py-28">
           <div>
             <p className="text-[11px] font-semibold tracking-[0.32em] text-[#c4b5fd] uppercase">AI multimedia</p>
-            <h2 className="mt-4 max-w-3xl text-4xl leading-[0.95] font-bold sm:text-6xl">The new era of AI content.</h2>
+            <h2 className="mt-4 max-w-3xl text-4xl leading-[0.95] font-bold sm:text-6xl">The new age of cinema is here!</h2>
           </div>
           <p className="max-w-md text-base leading-7 text-white/75 lg:pb-1">
-            Picture, performance, sound and world, directed as one piece. The warehouse and the wait are gone. The
-            taste stays with the studio. This is how films and campaigns get made now.
+            Picture, sound, performance and world, imagined and directed as one. The limits that once held stories back
+            are gone. What remains is the part that matters most: making people feel something!
           </p>
         </div>
       </section>
 
       <section className="border-t border-white/10 px-5 py-14 sm:px-10 sm:py-16">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-          <h2 className="max-w-xl text-3xl font-bold sm:text-4xl">What the new stack can hold.</h2>
-          <p className="max-w-sm text-sm leading-6 text-white/60">Three kinds of picture we make every week.</p>
+          <h2 className="max-w-xl text-3xl font-bold sm:text-4xl">Everything a story needs.</h2>
+          <p className="max-w-sm text-sm leading-6 text-white/60">The building blocks of every film we make.</p>
         </div>
         <ul className="mt-8 grid gap-4 md:grid-cols-3">
           {cards.map((card) => {

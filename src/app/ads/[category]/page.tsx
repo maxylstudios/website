@@ -3,9 +3,10 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AdsGalleryGrid } from "@/components/ads-browse";
 import { AdsHero } from "@/components/ads-hero";
+import { getHiddenCategories, visibleCategories } from "@/lib/hidden-categories";
 import { listPublishedMedia } from "@/lib/media";
 import { adsCategoryKey, getPageHeroes, pickFeatured } from "@/lib/page-heroes";
-import { adsCategories, adsCategory } from "@/lib/taxonomy";
+import { adsCategory } from "@/lib/taxonomy";
 
 type PageProps = {
   params: Promise<{ category: string }>;
@@ -21,10 +22,16 @@ export default async function AdsCategoryPage({ params }: PageProps) {
   const category = adsCategory(slug);
   if (!category) notFound();
 
-  const [uploaded, heroes] = await Promise.all([listPublishedMedia(), getPageHeroes()]);
+  const [uploaded, heroes, hidden] = await Promise.all([
+    listPublishedMedia(),
+    getPageHeroes(),
+    getHiddenCategories(),
+  ]);
+  const categories = visibleCategories("ads", hidden);
+  if (!categories.some((entry) => entry.slug === category.slug)) notFound();
   const films = uploaded.filter((item) => item.section === "ads" && item.category_slug === category.slug);
   const featured = pickFeatured(films, heroes[adsCategoryKey(category.slug)]);
-  const index = adsCategories.findIndex((entry) => entry.slug === category.slug) + 1;
+  const index = categories.findIndex((entry) => entry.slug === category.slug) + 1;
 
   return (
     <div className="bg-black">

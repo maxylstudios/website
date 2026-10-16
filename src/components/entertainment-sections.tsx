@@ -39,8 +39,9 @@ function CaseStudy({ item }: { item: MediaItem }) {
   const title = item.title?.trim() || "Untitled";
   const dossier = entertainmentDossier(item);
   const realUrl = isExternalUrl(item.external_url);
+  const showPartner = item.show_partner !== false;
   const partner = partnerLabel(realUrl || dossier.url, dossier.room);
-  const kuku = partner === "Kuku FM";
+  const kuku = partner === "Kuku TV";
   const href = mediaHref(item);
   const films = dossier.room === "Films";
 
@@ -73,23 +74,25 @@ function CaseStudy({ item }: { item: MediaItem }) {
             <dt>Look</dt>
             <dd>{dossier.style}</dd>
           </div>
-          <div>
-            <dt>Partner</dt>
-            <dd>{partner}</dd>
-          </div>
+          {showPartner ? (
+            <div>
+              <dt>Partner</dt>
+              <dd>{partner}</dd>
+            </div>
+          ) : null}
         </dl>
       )}
       <div className="case-actions">
         <Link href={href} className="case-watch">
           Watch
         </Link>
-        {realUrl ? (
+        {showPartner && realUrl ? (
           <a href={realUrl} target="_blank" rel="noopener noreferrer" className="case-out">
             {kuku ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src="/kuku-fm-mark.png" alt="" className="case-mark" />
             ) : null}
-            <span>{kuku ? "Open on Kuku FM" : "Open link"}</span>
+            <span>{kuku ? "Open on Kuku TV" : "Open link"}</span>
             <span aria-hidden>↗</span>
           </a>
         ) : null}

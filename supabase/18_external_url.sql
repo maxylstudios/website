@@ -1,5 +1,5 @@
 -- 18. Run after 17.
--- Optional external / partner link on each title (e.g. Kuku FM for microdramas).
+-- Optional external / partner link on each title (e.g. Kuku TV for microdramas).
 
 alter table public.media_items
   add column if not exists external_url text not null default '';

@@ -103,7 +103,7 @@ async function main() {
     const caption =
       String(row.caption || "").trim() ||
       (micro
-        ? `${title} is a Maxyl microdrama — a short, bingeable story cut for the phone and carried on Kuku FM.`
+        ? `${title} is a Maxyl microdrama — a short, bingeable story cut for the phone and carried on Kuku TV.`
         : `${title} is an original Maxyl film. GenAI is the camera and the set. The cut, the grade, and the taste stay with the studio.`);
     const client = String(row.client || "").trim() || "Maxyl Studios";
     const role = String(row.role || "").trim() || (micro ? "Microdrama" : "Original film");
