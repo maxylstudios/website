@@ -352,10 +352,74 @@ export async function saveItemPoster(id: string, path: string) {
     });
     if (error) throw new Error(schemaMessage(error.message));
     revalidatePath("/");
+    revalidatePath("/ads", "layout");
+    revalidatePath("/entertainment", "layout");
     revalidatePath("/admin/home");
+    revalidatePath("/admin/ads");
+    revalidatePath("/admin/entertainment");
+    revalidatePath(`/admin/media/${id}`);
     return { ok: true as const };
   } catch (caught) {
     const message = caught instanceof Error ? caught.message : "Could not save the poster.";
+    return { ok: false as const, message };
+  }
+}
+
+/** Upload a video poster from the Edit page. Runs on the server so deployment CORS cannot block it. */
+export async function uploadItemPoster(formData: FormData) {
+  try {
+    const token = await tokenOrThrow();
+    const id = String(formData.get("id") ?? "");
+    const file = formData.get("file");
+    if (!id) return { ok: false as const, message: "Missing upload id." };
+    if (!(file instanceof Blob) || file.size === 0) {
+      return { ok: false as const, message: "Choose a poster image." };
+    }
+    if (file.size > 4 * 1024 * 1024) {
+      return { ok: false as const, message: "Keep the poster under 4MB." };
+    }
+
+    const contentType = (file.type || "image/jpeg").startsWith("image/")
+      ? file.type || "image/jpeg"
+      : "";
+    if (!contentType) {
+      return { ok: false as const, message: "Choose an image file." };
+    }
+
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+    if (!url || !key) {
+      return { ok: false as const, message: "Storage is not configured." };
+    }
+
+    const path = `uploads/${crypto.randomUUID()}.${extensionForType(contentType)}`;
+    const supabase = createPublicSupabase();
+    const { error: ticketError } = await supabase.rpc("begin_media_upload", {
+      raw_token: token,
+      ticket_path: path,
+    });
+    if (ticketError) throw new Error(schemaMessage(ticketError.message));
+
+    const response = await fetch(`${url}/storage/v1/object/media/${path}`, {
+      method: "POST",
+      headers: {
+        apikey: key,
+        Authorization: `Bearer ${key}`,
+        "Content-Type": contentType,
+        "x-upsert": "false",
+      },
+      body: Buffer.from(await file.arrayBuffer()),
+    });
+    if (!response.ok) {
+      const text = await response.text();
+      throw new Error(text || "Storage upload failed.");
+    }
+
+    const saved = await saveItemPoster(id, path);
+    if (!saved.ok) return saved;
+    return { ok: true as const, url: mediaPublicUrl(path) };
+  } catch (caught) {
+    const message = caught instanceof Error ? caught.message : "Could not upload the poster.";
     return { ok: false as const, message };
   }
 }

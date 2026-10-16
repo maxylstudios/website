@@ -3,10 +3,9 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { saveHomepageBoard, saveItemPoster } from "@/app/admin/actions";
+import { saveHomepageBoard } from "@/app/admin/actions";
 import { posterSrc } from "@/components/home-shelves";
 import { MediaThumb } from "@/components/media-thumb";
-import { uploadAdminFile } from "@/lib/admin-upload";
 import { isPortraitItem, type MediaItem } from "@/lib/media";
 
 type Lane = "horizontal" | "vertical" | "image";
@@ -58,7 +57,6 @@ export function HomeBoardEditor({
   const [query, setQuery] = useState("");
   const [dragId, setDragId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [posterBusy, setPosterBusy] = useState<string | null>(null);
   const [error, setError] = useState(message);
   const [saved, setSaved] = useState(false);
 
@@ -87,28 +85,6 @@ export function HomeBoardEditor({
     setDragId(null);
   }
 
-  async function uploadPoster(id: string, file: File) {
-    setPosterBusy(id);
-    setError("");
-    try {
-      const path = await uploadAdminFile(file, "image", () => {});
-      const result = await saveItemPoster(id, path);
-      if (!result.ok) {
-        setError(result.message);
-        return;
-      }
-      const patch = (item: MediaItem) => (item.id === id ? { ...item, poster_path: path } : item);
-      setHorizontal((current) => current.map(patch));
-      setVertical((current) => current.map(patch));
-      setImages((current) => current.map(patch));
-      setSaved(true);
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Could not upload the poster.");
-    } finally {
-      setPosterBusy(null);
-    }
-  }
-
   async function save() {
     setBusy(true);
     setError("");
@@ -133,7 +109,7 @@ export function HomeBoardEditor({
           <p className="text-xs font-semibold tracking-[0.28em] text-[#c4b5fd] uppercase">Homepage</p>
           <h1 className="mt-2 text-3xl font-bold">The shelves</h1>
           <p className="mt-2 max-w-xl text-sm leading-6 text-muted">
-            Same rows as the homepage under the hero. Landscape films, portrait films, then pictures. On a film, Poster uploads art of any shape.
+            Same rows as the homepage under the hero. Landscape films, portrait films, then pictures. Change a film poster from Edit upload.
           </p>
         </div>
         <button
@@ -153,9 +129,6 @@ export function HomeBoardEditor({
         title="Landscape"
         hint="Wide films. The first shelf under the hero."
         artClass="h-36 w-64"
-        posters
-        posterBusy={posterBusy}
-        onPoster={uploadPoster}
         items={horizontal}
         adding={adding === "horizontal"}
         pool={pools.horizontal}
@@ -176,9 +149,6 @@ export function HomeBoardEditor({
         title="Portrait"
         hint="Tall films. The shelf under the landscape films."
         artClass="h-64 w-36"
-        posters
-        posterBusy={posterBusy}
-        onPoster={uploadPoster}
         items={vertical}
         adding={adding === "vertical"}
         pool={pools.vertical}
@@ -222,9 +192,6 @@ function LaneEditor({
   title,
   hint,
   artClass,
-  posters = false,
-  posterBusy,
-  onPoster,
   items,
   adding,
   pool,
@@ -240,9 +207,6 @@ function LaneEditor({
   title: string;
   hint: string;
   artClass: string;
-  posters?: boolean;
-  posterBusy?: string | null;
-  onPoster?: (id: string, file: File) => void;
   items: MediaItem[];
   adding: boolean;
   pool: MediaItem[];
@@ -304,23 +268,10 @@ function LaneEditor({
                 </Link>
               </div>
               <div className="mt-2 flex max-w-[16rem] flex-wrap gap-1.5">
-                {posters ? (
-                  <label className="relative cursor-pointer overflow-hidden rounded bg-[#8b5cf6] px-2 py-1 text-[11px] font-bold text-black">
-                    {posterBusy === item.id ? "Uploading" : item.poster_path ? "Replace poster" : "Poster"}
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="absolute inset-0 cursor-pointer opacity-0"
-                      disabled={posterBusy === item.id}
-                      onChange={(event) => {
-                        const file = event.target.files?.[0];
-                        event.target.value = "";
-                        if (file && onPoster) onPoster(item.id, file);
-                      }}
-                    />
-                  </label>
-                ) : null}
                 {!item.published ? <span className="rounded bg-white/15 px-2 py-1 text-[11px] font-semibold">Hidden</span> : null}
+                <Link href={`/admin/media/${item.id}`} className="rounded bg-[#8b5cf6] px-2 py-1 text-[11px] font-bold text-black">
+                  Edit / poster
+                </Link>
                 <button type="button" aria-label={`Move ${item.title} earlier`} onClick={() => onMove(item.id, -1)} className="rounded bg-white/15 px-2 py-1 text-[11px] font-bold">
                   Earlier
                 </button>

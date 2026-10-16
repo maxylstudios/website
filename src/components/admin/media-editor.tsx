@@ -13,7 +13,7 @@ import {
   type MediaCrop,
   type MediaItem,
 } from "@/lib/media";
-import { loadAdminItem, removeAdminMedia, saveAdminMedia } from "@/app/admin/actions";
+import { loadAdminItem, removeAdminMedia, saveAdminMedia, uploadItemPoster } from "@/app/admin/actions";
 import { uploadAdminFile } from "@/lib/admin-upload";
 import { grabVideoPosterFile } from "@/lib/video-poster";
 import { cropImage, extensionForType } from "@/lib/crop-image";
@@ -47,11 +47,13 @@ export function MediaEditor({ id }: Props) {
   const [zoom, setZoom] = useState(1);
   const [pixels, setPixels] = useState<Area | null>(null);
   const [busy, setBusy] = useState(false);
+  const [posterBusy, setPosterBusy] = useState(false);
   const [progress, setProgress] = useState<Progress>(null);
   const [error, setError] = useState("");
   const [hint, setHint] = useState("");
   const [drag, setDrag] = useState<{ x: number; y: number; origin: MediaCrop } | null>(null);
   const [dragOver, setDragOver] = useState(false);
+  const [posterPreview, setPosterPreview] = useState<string | null>(null);
 
   const kind: "image" | "video" | null = file
     ? file.type.startsWith("video/")
@@ -89,6 +91,7 @@ export function MediaEditor({ id }: Props) {
       setAspect(item.aspect);
       setFocus(item.crop ?? { x: 50, y: 50 });
       setPreview(mediaPublicUrl(item.storage_path));
+      setPosterPreview(item.poster_path ? mediaPublicUrl(item.poster_path) : null);
     }
 
     void load();
@@ -158,6 +161,28 @@ export function MediaEditor({ id }: Props) {
     const nextX = Math.min(100, Math.max(0, drag.origin.x - (event.clientX - drag.x) / 4));
     const nextY = Math.min(100, Math.max(0, drag.origin.y - (event.clientY - drag.y) / 4));
     setFocus({ x: nextX, y: nextY });
+  }
+
+  async function uploadPoster(next: File | null) {
+    if (!id || !next) return;
+    setPosterBusy(true);
+    setError("");
+    try {
+      const body = new FormData();
+      body.set("id", id);
+      body.set("file", next);
+      const result = await uploadItemPoster(body);
+      if (!result.ok) {
+        setError(result.message);
+        return;
+      }
+      setPosterPreview(result.url);
+      router.refresh();
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Could not upload the poster.");
+    } finally {
+      setPosterBusy(false);
+    }
   }
 
   async function save() {
@@ -443,6 +468,35 @@ export function MediaEditor({ id }: Props) {
             Optional. Films or microdramas can link out — e.g. the Kuku TV episode page.
           </span>
         </label>
+
+        {id && kind === "video" ? (
+          <div className="mt-4 rounded-xl border border-white/10 bg-black/40 p-3">
+            <p className="text-sm font-semibold">Poster thumbnail</p>
+            <p className="mt-1 text-xs leading-5 text-muted">
+              Optional. Shown on Ads and Entertainment shelves. Keep it under 4MB.
+            </p>
+            {posterPreview ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={posterPreview} alt="" className="mt-3 h-28 w-auto max-w-full rounded-lg border border-white/15 object-contain" />
+            ) : (
+              <p className="mt-3 text-xs tracking-[0.14em] text-white/35 uppercase">No poster yet</p>
+            )}
+            <label className="mt-3 inline-flex cursor-pointer rounded-full bg-white px-3 py-1.5 text-[11px] font-bold text-black">
+              {posterBusy ? "Uploading…" : posterPreview ? "Replace poster" : "Upload poster"}
+              <input
+                type="file"
+                accept="image/*"
+                className="sr-only"
+                disabled={posterBusy}
+                onChange={(event) => {
+                  const next = event.target.files?.[0] ?? null;
+                  event.target.value = "";
+                  void uploadPoster(next);
+                }}
+              />
+            </label>
+          </div>
+        ) : null}
 
         <fieldset className="mt-4">
           <legend className="text-sm text-muted">Frame</legend>

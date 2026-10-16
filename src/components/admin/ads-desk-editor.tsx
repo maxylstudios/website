@@ -8,11 +8,9 @@ import {
   restoreCatalogueCategory,
   saveCatalogueOrder,
   saveItemCopy,
-  saveItemPoster,
   savePageHeroes,
 } from "@/app/admin/actions";
 import { posterSrc } from "@/components/home-shelves";
-import { uploadAdminFile } from "@/lib/admin-upload";
 import type { HiddenCategory } from "@/lib/hidden-categories";
 import { adsCategoryKey, adsPageKey } from "@/lib/page-heroes";
 import { sortCatalogue, type MediaItem } from "@/lib/media";
@@ -67,7 +65,6 @@ export function AdsDeskEditor({
   const [filter, setFilter] = useState("all");
   const [query, setQuery] = useState("");
   const [busy, setBusy] = useState(false);
-  const [posterBusy, setPosterBusy] = useState<string | null>(null);
   const [error, setError] = useState(message);
   const [saved, setSaved] = useState("");
 
@@ -141,25 +138,6 @@ export function AdsDeskEditor({
         return next;
       });
     });
-  }
-
-  async function uploadPoster(id: string, file: File) {
-    setPosterBusy(id);
-    setError("");
-    try {
-      const path = await uploadAdminFile(file, "image", () => {});
-      const result = await saveItemPoster(id, path);
-      if (!result.ok) {
-        setError(result.message);
-        return;
-      }
-      setSaved("Poster updated.");
-      router.refresh();
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Could not upload the poster.");
-    } finally {
-      setPosterBusy(null);
-    }
   }
 
   async function toggleCategory(slug: string, hiddenNow: boolean) {
@@ -402,25 +380,11 @@ export function AdsDeskEditor({
                         >
                           Down
                         </button>
-                        <label className="relative cursor-pointer overflow-hidden rounded bg-white/15 px-2 py-1 text-[11px] font-bold">
-                          {posterBusy === item.id ? "…" : item.poster_path ? "Poster" : "Add poster"}
-                          <input
-                            type="file"
-                            accept="image/*"
-                            className="absolute inset-0 cursor-pointer opacity-0"
-                            disabled={posterBusy === item.id}
-                            onChange={(event) => {
-                              const file = event.target.files?.[0];
-                              if (file) void uploadPoster(item.id, file);
-                              event.currentTarget.value = "";
-                            }}
-                          />
-                        </label>
                         <Link
                           href={`/admin/media/${item.id}`}
-                          className="text-[11px] tracking-[0.12em] text-white/45 uppercase hover:text-white"
+                          className="rounded bg-[#8b5cf6] px-2 py-1 text-[11px] font-bold text-black"
                         >
-                          Edit
+                          Edit / poster
                         </Link>
                         {!item.published ? (
                           <span className="text-[10px] tracking-[0.12em] text-amber-200/80 uppercase">Draft</span>
